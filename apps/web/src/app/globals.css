@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 17, 24, 39;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Recipe card styles */
+.recipe-card {
+  @apply bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200;
+}
+
+.recipe-card-image {
+  @apply w-full h-48 object-cover;
+}
+
+.recipe-card-content {
+  @apply p-4;
+}
+
+/* Recipe page styles */
+.recipe-ingredient {
+  @apply flex justify-between items-center py-2 border-b border-gray-100;
+}
+
+.recipe-step {
+  @apply mb-4 pb-4 border-b border-gray-100 last:border-0;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .recipe-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+}
