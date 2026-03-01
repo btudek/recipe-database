@@ -198,6 +198,157 @@ app.get('/api/search', async (request: any) => {
 });
 
 // ============================================
+// SITEMAP
+// ============================================
+
+app.get('/sitemap.xml', async () => {
+  const recipes = await prisma.recipe.findMany({
+    where: { status: 'published' },
+    select: { slug: true, updatedAt: true },
+  });
+
+  const baseUrl = 'https://recipedatabase.com';
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/cuisines</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/categories</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  ${recipes.map(recipe => `
+  <url>
+    <loc>${baseUrl}/recipe/${recipe.slug}</loc>
+    <lastmod>${recipe.updatedAt.toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  `).join('')}
+</urlset>`;
+
+  return sitemap;
+});
+
+// ============================================
+// RATINGS & COMMENTS
+// ============================================
+
+app.post('/api/recipes/:id/rate', async (request: any) => {
+  const user = request.user as any;
+  const { id: recipeId } = request.params;
+  const { value } = request.body as { value: number };
+
+  if (!user) {
+    throw { statusCode: 401, message: 'Must be logged in' };
+  }
+
+  if (value < 1 || value > 5) {
+    throw { statusCode: 400, message: 'Rating must be 1-5' };
+  }
+
+  return prisma.rating.upsert({
+    where: { userId_recipeId: { userId: user.id, recipeId } },
+    create: { userId: user.id, recipeId, value },
+    update: { value },
+  });
+});
+
+app.get('/api/recipes/:id/comments', async (request: any) => {
+  const { id: recipeId } = request.params;
+
+  return prisma.comment.findMany({
+    where: { recipeId, isApproved: true, isDeleted: false },
+    include: { user: { select: { username: true, avatarUrl: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+});
+
+app.post('/api/recipes/:id/comments', async (request: any) => {
+  const user = request.user as any;
+  const { id: recipeId } = request.params;
+  const { content } = request.body as { content: string };
+
+  if (!user) {
+    throw { statusCode: 401, message: 'Must be logged in' };
+  }
+
+  return prisma.comment.create({
+    data: {
+      userId: user.id,
+      recipeId,
+      content,
+    },
+    include: { user: { select: { username: true, avatarUrl: true } } },
+  });
+});
+
+// ============================================
+// SAVE RECIPE
+// ============================================
+
+app.post('/api/recipes/:id/save', async (request: any) => {
+  const user = request.user as any;
+  const { id: recipeId } = request.params;
+
+  if (!user) {
+    throw { statusCode: 401, message: 'Must be logged in' };
+  }
+
+  return prisma.userSavedRecipe.upsert({
+    where: { userId_recipeId: { userId: user.id, recipeId } },
+    create: { userId: user.id, recipeId },
+    update: {},
+    include: { recipe: true },
+  });
+});
+
+app.delete('/api/recipes/:id/save', async (request: any) => {
+  const user = request.user as any;
+  const { id: recipeId } = request.params;
+
+  if (!user) {
+    throw { statusCode: 401, message: 'Must be logged in' };
+  }
+
+  return prisma.userSavedRecipe.delete({
+    where: { userId_recipeId: { userId: user.id, recipeId } },
+  });
+});
+
+// ============================================
+// CUISINE PAGE
+// ============================================
+
+app.get('/api/cuisine/:slug', async (request: any) => {
+  const { slug } = request.params;
+
+  const cuisine = await prisma.cuisine.findUnique({
+    where: { slug },
+  });
+
+  if (!cuisine) {
+    throw { statusCode: 404, message: 'Cuisine not found' };
+  }
+
+  const recipes = await prisma.recipe.findMany({
+    where: { cuisineId: cuisine.id, status: 'published' },
+    include: { cuisine: true, category: true },
+  });
+
+  return { cuisine, recipes };
+});
+
+// ============================================
 // START
 // ============================================
 

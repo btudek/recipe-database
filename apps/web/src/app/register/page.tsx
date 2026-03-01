@@ -33,7 +33,8 @@ export default function RegisterPage() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      router.push('/');
+      // Force reload so header updates
+      window.location.href = '/';
     } catch (err: any) {
       setError(err.message);
     } finally {
