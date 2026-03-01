@@ -1,6 +1,49 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface Recipe {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  prepTime: number;
+  cookTime: number;
+  imageUrl: string | null;
+  cuisine: { name: string; slug: string };
+  category: { name: string; slug: string };
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+
 export default function HomePage() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [cuisines, setCuisines] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [recipesRes, cuisinesRes] = await Promise.all([
+          fetch(`${API_URL}/api/recipes`),
+          fetch(`${API_URL}/api/cuisines`),
+        ]);
+        
+        const recipesData = await recipesRes.json();
+        const cuisinesData = await cuisinesRes.json();
+        
+        setRecipes(recipesData.slice(0, 6));
+        setCuisines(cuisinesData);
+      } catch (error) {
+        console.error('Failed to fetch:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   return (
     <div className="recipe-container max-w-7xl mx-auto px-4 py-8">
       {/* Hero Section */}
@@ -10,7 +53,7 @@ export default function HomePage() {
         </h1>
         <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
           Explore thousands of original recipes with precise measurements, 
-          portion scaling, and Michelin-technique guidance.
+          portion scaling, and chef-quality techniques.
         </p>
         
         {/* Search Bar */}
@@ -35,48 +78,37 @@ export default function HomePage() {
       {/* Featured Recipes */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Featured Recipes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Placeholder cards - will be dynamic */}
-          <RecipeCard
-            title="Classic Chicken Parmesan"
-            image="/images/placeholder-chicken.jpg"
-            cuisine="Italian"
-            time={45}
-            rating={4.8}
-          />
-          <RecipeCard
-            title="Thai Basil Stir Fry"
-            image="/images/placeholder-thai.jpg"
-            cuisine="Thai"
-            time={25}
-            rating={4.7}
-          />
-          <RecipeCard
-            title="French Onion Soup"
-            image="/images/placeholder-soup.jpg"
-            cuisine="French"
-            time={60}
-            rating={4.9}
-          />
-        </div>
+        {loading ? (
+          <p className="text-gray-500">Loading recipes...</p>
+        ) : recipes.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <p className="text-gray-500 mb-4">No recipes yet!</p>
+            <Link href="/register" className="text-primary-600 hover:underline">
+              Sign up to add recipes
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recipes.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Browse by Cuisine */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Browse by Cuisine</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {cuisines.map((cuisine) => (
+            <CuisineCard key={cuisine.id} name={cuisine.name} slug={cuisine.slug} />
+          ))}
           <CuisineCard name="Italian" slug="italian" />
           <CuisineCard name="Mexican" slug="mexican" />
           <CuisineCard name="Chinese" slug="chinese" />
           <CuisineCard name="Japanese" slug="japanese" />
           <CuisineCard name="Indian" slug="indian" />
           <CuisineCard name="French" slug="french" />
-          <CuisineCard name="Thai" slug="thai" />
-          <CuisineCard name="American" slug="american" />
-          <CuisineCard name="Mediterranean" slug="mediterranean" />
-          <CuisineCard name="Korean" slug="korean" />
-          <CuisineCard name="Vietnamese" slug="vietnamese" />
-          <CuisineCard name="Greek" slug="greek" />
         </div>
       </section>
 
@@ -120,32 +152,23 @@ export default function HomePage() {
   );
 }
 
-function RecipeCard({ 
-  title, 
-  image, 
-  cuisine, 
-  time, 
-  rating 
-}: { 
-  title: string; 
-  image: string; 
-  cuisine: string; 
-  time: number; 
-  rating: number;
-}) {
+function RecipeCard({ recipe }: { recipe: Recipe }) {
+  const totalTime = recipe.prepTime + recipe.cookTime;
+  
   return (
-    <Link href={`/recipe/${title.toLowerCase().replace(/\s+/g, '-')}`} className="recipe-card group">
-      <div className="relative h-48 bg-gray-200">
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          📷 Image
-        </div>
+    <Link href={`/recipe/${recipe.slug}`} className="recipe-card group">
+      <div className="relative h-48 bg-gray-200 flex items-center justify-center">
+        {recipe.imageUrl ? (
+          <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-6xl">🍽️</div>
+        )}
       </div>
       <div className="recipe-card-content">
-        <span className="text-sm text-primary-600 font-medium">{cuisine}</span>
-        <h3 className="font-semibold text-lg mt-1 group-hover:text-primary-600">{title}</h3>
+        <span className="text-sm text-primary-600 font-medium">{recipe.cuisine?.name || 'Recipe'}</span>
+        <h3 className="font-semibold text-lg mt-1 group-hover:text-primary-600">{recipe.title}</h3>
         <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
-          <span>⏱️ {time} min</span>
-          <span>⭐ {rating}</span>
+          <span>⏱️ {totalTime} min</span>
         </div>
       </div>
     </Link>

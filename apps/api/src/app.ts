@@ -6,9 +6,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const app = Fastify({ logger: true });
 
-// Plugins
+// Plugins - Allow all origins for development
 await app.register(cors, { 
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: true,
   credentials: true 
 });
 
@@ -26,7 +26,7 @@ app.get('/health', async () => ({ status: 'ok' }));
 // RECIPES
 // ============================================
 
-app.get('/api/recipes', async (request) => {
+app.get('/api/recipes', async (request: any) => {
   const { cuisine, category, search, limit = 20, offset = 0 } = request.query as any;
   
   const where: any = { status: 'published' };
@@ -49,8 +49,8 @@ app.get('/api/recipes', async (request) => {
   });
 });
 
-app.get('/api/recipes/:slug', async (request) => {
-  const { slug } = request.params as any;
+app.get('/api/recipes/:slug', async (request: any) => {
+  const { slug } = request.params;
   
   const recipe = await prisma.recipe.findUnique({
     where: { slug },
@@ -66,7 +66,6 @@ app.get('/api/recipes/:slug', async (request) => {
     throw { statusCode: 404, message: 'Recipe not found' };
   }
 
-  // Get average rating
   const ratings = await prisma.rating.aggregate({
     where: { recipeId: recipe.id },
     _avg: { value: true },
@@ -80,10 +79,9 @@ app.get('/api/recipes/:slug', async (request) => {
 // AUTH
 // ============================================
 
-app.post('/api/auth/register', async (request) => {
-  const { email, username, password } = request.body as any;
+app.post('/api/auth/register', async (request: any) => {
+  const { email, username, password } = request.body;
   
-  // Check existing
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email }, { username }] },
   });
@@ -92,7 +90,6 @@ app.post('/api/auth/register', async (request) => {
     throw { statusCode: 400, message: 'Email or username already exists' };
   }
 
-  // In production: hash password with bcrypt
   const passwordHash = `hashed_${password}`;
 
   const user = await prisma.user.create({
@@ -104,8 +101,8 @@ app.post('/api/auth/register', async (request) => {
   return { user, token };
 });
 
-app.post('/api/auth/login', async (request) => {
-  const { email, password } = request.body as any;
+app.post('/api/auth/login', async (request: any) => {
+  const { email, password } = request.body;
   
   const user = await prisma.user.findUnique({ where: { email } });
   
@@ -113,7 +110,6 @@ app.post('/api/auth/login', async (request) => {
     throw { statusCode: 401, message: 'Invalid credentials' };
   }
 
-  // In production: verify bcrypt hash
   const valid = user.passwordHash === `hashed_${password}`;
   
   if (!valid) {
@@ -128,10 +124,10 @@ app.post('/api/auth/login', async (request) => {
 });
 
 // ============================================
-// USER RECIPES
+// USER
 // ============================================
 
-app.get('/api/users/me', async (request) => {
+app.get('/api/users/me', async (request: any) => {
   const user = request.user as any;
   
   return prisma.user.findUnique({
@@ -140,8 +136,7 @@ app.get('/api/users/me', async (request) => {
   });
 });
 
-// Saved recipes
-app.get('/api/users/saved', async (request) => {
+app.get('/api/users/saved', async (request: any) => {
   const user = request.user as any;
   
   return prisma.userSavedRecipe.findMany({
@@ -152,7 +147,7 @@ app.get('/api/users/saved', async (request) => {
   });
 });
 
-app.post('/api/users/saved/:recipeId', async (request) => {
+app.post('/api/users/saved/:recipeId', async (request: any) => {
   const user = request.user as any;
   const { recipeId } = request.params;
 
@@ -161,15 +156,6 @@ app.post('/api/users/saved/:recipeId', async (request) => {
     create: { userId: user.id, recipeId },
     update: {},
     include: { recipe: true },
-  });
-});
-
-app.delete('/api/users/saved/:recipeId', async (request) => {
-  const user = request.user as any;
-  const { recipeId } = request.params;
-
-  return prisma.userSavedRecipe.delete({
-    where: { userId_recipeId: { userId: user.id, recipeId } },
   });
 });
 
@@ -193,8 +179,8 @@ app.get('/api/categories', async () => {
 // SEARCH
 // ============================================
 
-app.get('/api/search', async (request) => {
-  const { q, limit = 20 } = request.query as any;
+app.get('/api/search', async (request: any) => {
+  const { q, limit = 20 } = request.query;
 
   if (!q) return [];
 

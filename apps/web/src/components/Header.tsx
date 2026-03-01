@@ -1,6 +1,25 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export function Header() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/';
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 no-print">
       <div className="max-w-7xl mx-auto px-4">
@@ -36,18 +55,32 @@ export function Header() {
               </svg>
             </Link>
             
-            <Link 
-              href="/login"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Sign In
-            </Link>
-            <Link 
-              href="/register"
-              className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Hi, {user.username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link 
+                  href="/login"
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  href="/register"
+                  className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
