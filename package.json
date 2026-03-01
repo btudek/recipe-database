@@ -2,17 +2,13 @@
   "name": "recipe-database",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "db:generate": "turbo db:generate",
-    "db:push": "turbo db:push",
-    "db:studio": "turbo db:studio"
+    "dev": "npx turbo dev",
+    "build": "npx turbo build",
+    "lint": "npx turbo lint",
+    "db:generate": "npx turbo db:generate",
+    "db:push": "npx turbo db:push",
+    "db:studio": "npx turbo db:studio"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
@@ -21,6 +17,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "packageManager": "pnpm@8.15.0"
+  }
 }

@@ -5,14 +5,16 @@
   "scripts": {
     "dev": "fastify start -l info -w src/app.ts",
     "build": "tsc",
-    "start": "fastify start -l info src/app.ts"
+    "start": "fastify start -l info src/app.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "fastify": "^4.25.0",
     "@fastify/cors": "^8.5.0",
     "@fastify/jwt": "^8.0.0",
     "@prisma/client": "^5.8.0",
-    "schema": "*",
     "shared": "*",
     "bcryptjs": "^2.4.3"
   },
