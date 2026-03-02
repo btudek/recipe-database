@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { getRecipes } from '@/lib/supabase';
 
 interface Recipe {
   id: string;
@@ -14,69 +13,102 @@ interface Recipe {
   cookTime: number;
   imageUrl: string | null;
   cuisine: { name: string; slug: string };
+  category: { name: string; slug: string };
 }
 
-export default function CategoryPage() {
+const RECIPE_PHOTOS: Record<string, string> = {
+  'spaghetti-carbonara': 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800',
+  'chicken-tacos': 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
+  'sushi-rolls': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
+  'beef-bourguignon': 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=800',
+  'pad-thai': 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
+  'margherita-pizza': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800',
+  'chocolate-lava-cake': 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800',
+};
+
+export default function CategoriesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/recipes`)
-      .then(res => res.json())
+    getRecipes()
       .then(data => {
-        // Show all recipes for now - in production filter by category
-        setRecipes(data);
+        setRecipes(data || []);
         setLoading(false);
       })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  const categories = [
+    { name: 'All', slug: 'all' },
+    { name: 'Breakfast', slug: 'breakfast' },
+    { name: 'Lunch', slug: 'lunch' },
+    { name: 'Dinner', slug: 'dinner' },
+    { name: 'Desserts', slug: 'desserts' },
+    { name: 'Appetizers', slug: 'appetizers' },
+    { name: 'Soups', slug: 'soups' },
+    { name: 'Salads', slug: 'salads' },
+  ];
+
+  const filteredRecipes = selectedCategory === 'all' 
+    ? recipes 
+    : recipes.filter(r => r.category?.slug === selectedCategory);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">All Recipes</h1>
+      <h1 className="text-3xl font-bold text-white mb-8">📂 Browse by Category</h1>
 
-      <div className="flex justify-between items-center mb-6">
-        <span className="text-gray-500">{recipes.length} recipes</span>
-        <div className="flex gap-2">
-          <button onClick={() => setViewMode('grid')} className={`px-3 py-1 rounded ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>Grid</button>
-          <button onClick={() => setViewMode('list')} className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>List</button>
-        </div>
+      {/* Category Filter */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        {categories.map(cat => (
+          <button
+            key={cat.slug}
+            onClick={() => setSelectedCategory(cat.slug)}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              selectedCategory === cat.slug
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
+            }`}
+          >
+            {cat.name}
+          </button>
+        ))}
       </div>
 
-      {recipes.length === 0 ? (
-        <p className="text-gray-500">No recipes yet.</p>
-      ) : viewMode === 'grid' ? (
+      {/* Recipe Count */}
+      <p className="text-gray-400 mb-4">{filteredRecipes.length} recipes found</p>
+
+      {/* Recipes Grid */}
+      {loading ? (
+        <p className="text-gray-500">Loading...</p>
+      ) : filteredRecipes.length === 0 ? (
+        <p className="text-gray-500">No recipes in this category yet.</p>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.map(recipe => (
-            <Link key={recipe.id} href={`/recipe/${recipe.slug}`} className="recipe-card group">
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
-                <span className="text-6xl">🍽️</span>
+          {filteredRecipes.map((recipe) => (
+            <Link 
+              key={recipe.id} 
+              href={`/recipe/${recipe.slug}`}
+              className="bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all"
+            >
+              <div className="h-48 bg-gray-800 relative overflow-hidden">
+                {recipe.imageUrl || RECIPE_PHOTOS[recipe.slug] ? (
+                  <img 
+                    src={recipe.imageUrl || RECIPE_PHOTOS[recipe.slug]} 
+                    alt={recipe.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-5xl">🍽️</div>
+                )}
               </div>
               <div className="p-4">
-                <span className="text-sm text-primary-600 font-medium">{recipe.cuisine?.name}</span>
-                <h3 className="font-semibold text-lg mt-1">{recipe.title}</h3>
-                <p className="text-sm text-gray-500 mt-2">⏱️ {recipe.prepTime + recipe.cookTime} min</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {recipes.map(recipe => (
-            <Link key={recipe.id} href={`/recipe/${recipe.slug}`} className="flex gap-4 p-4 bg-white rounded-lg border hover:border-primary-300">
-              <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                <span className="text-3xl">🍽️</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">{recipe.title}</h3>
-                <p className="text-gray-600 text-sm">{recipe.description}</p>
-                <span className="text-sm text-gray-500">⏱️ {recipe.prepTime + recipe.cookTime} min</span>
+                <span className="text-sm text-primary-400 font-medium">{recipe.cuisine?.name}</span>
+                <h3 className="font-semibold text-lg mt-1 text-white">{recipe.title}</h3>
+                <div className="flex items-center mt-2 text-sm text-gray-500">
+                  <span>⏱️ {recipe.prepTime + recipe.cookTime} min</span>
+                </div>
               </div>
             </Link>
           ))}
