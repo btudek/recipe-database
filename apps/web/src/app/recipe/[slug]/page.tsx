@@ -65,15 +65,13 @@ export default function RecipePage() {
         console.log('Response status:', res.status);
         return res.json();
       })
-      .then(data => {
-        console.log('Recipe data:', data);
-        setRecipe(data);
-        setServings(data.yield);
-        setLoading(false);
-        if (data.id) {
-          fetchComments(data.id);
-        }
-      })
+  console.log('Recipe data:', data);
+  setRecipe(data);
+  setServings(data?.yield || 4);
+  setLoading(false);
+  if (data?.id) {
+    fetchComments(data.id);
+  }
       .catch(err => {
         console.error('Fetch error:', err);
         setError(err.message);
@@ -149,11 +147,11 @@ export default function RecipePage() {
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center">Recipe not found</div>;
 
-  const scaleFactor = servings / recipe.yield;
+  const scaleFactor = servings / (recipe?.yield || 1);
   
-  const scaledIngredients = recipe.ingredients.map(ing => {
-    const scaled = ing.quantity * scaleFactor;
-    return `${scaled.toFixed(1)} ${ing.unit} ${ing.name}${ing.notes ? `, ${ing.notes}` : ''}`;
+  const scaledIngredients = (recipe?.ingredients || []).map((ing: Ingredient) => {
+    const scaled = (ing.quantity || 0) * scaleFactor;
+    return `${scaled.toFixed(1)} ${ing.unit || ''} ${ing.name || ''}${ing.notes ? `, ${ing.notes}` : ''}`;
   });
 
   return (
@@ -246,7 +244,7 @@ export default function RecipePage() {
       <section className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">Instructions</h2>
         <ol className="space-y-6">
-          {recipe.steps.map(step => (
+          {(recipe.steps || []).map((step: Step) => (
             <li key={step.stepNumber} className="flex gap-4 pb-4 border-b border-gray-800">
               <span className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">
                 {step.stepNumber}
