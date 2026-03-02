@@ -246,6 +246,26 @@ export default function RecipePage() {
     window.print();
   };
 
+  const handleShare = async () => {
+    if (!recipe) return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text: recipe.description,
+          url: url,
+        });
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  };
+
   if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center text-white">Recipe not found</div>;
@@ -286,6 +306,13 @@ export default function RecipePage() {
             title="Print recipe"
           >
             🖨️
+          </button>
+          <button
+            onClick={handleShare}
+            className="px-3 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+            title="Share recipe"
+          >
+            📤
           </button>
           <button
             onClick={toggleFavorite}
@@ -362,6 +389,38 @@ export default function RecipePage() {
           ))}
         </ul>
       </section>
+
+      {/* Nutrition Info */}
+      {recipe.nutrition && (
+        <section className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-4">📊 Nutrition Facts</h2>
+          <div className="bg-gray-900 rounded-xl p-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-white">{recipe.nutrition.calories || '—'}</div>
+                <div className="text-sm text-gray-400">Calories</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-white">{recipe.nutrition.protein || '—'}g</div>
+                <div className="text-sm text-gray-400">Protein</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-white">{recipe.nutrition.carbs || '—'}g</div>
+                <div className="text-sm text-gray-400">Carbs</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-white">{recipe.nutrition.fat || '—'}g</div>
+                <div className="text-sm text-gray-400">Fat</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="text-2xl font-bold text-white">{servings}</div>
+                <div className="text-sm text-gray-400">Servings</div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-4 text-center">Per serving</p>
+          </div>
+        </section>
+      )}
 
       <section className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">Instructions</h2>
