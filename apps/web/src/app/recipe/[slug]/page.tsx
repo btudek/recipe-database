@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRecipe } from '@/lib/supabase';
 
 interface Ingredient {
@@ -35,6 +36,13 @@ interface Recipe {
   proTips?: string;
   storageInfo?: string;
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
+}
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  date: string;
 }
 
 // Local storage helpers
@@ -70,10 +78,8 @@ function addToShoppingList(recipe: Recipe, scaledIngredients: string[]) {
   const existingIndex = list.findIndex((item: any) => item.recipeId === recipe.id);
   
   if (existingIndex >= 0) {
-    // Update existing
     list[existingIndex].ingredients = scaledIngredients;
   } else {
-    // Add new
     list.push({
       recipeId: recipe.id,
       recipeTitle: recipe.title,
@@ -83,6 +89,31 @@ function addToShoppingList(recipe: Recipe, scaledIngredients: string[]) {
   }
   
   localStorage.setItem('shoppingList', JSON.stringify(list));
+}
+
+function getRatings(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  return JSON.parse(localStorage.getItem('ratings') || '{}');
+}
+
+function setRating(recipeId: string, value: number) {
+  const ratings = getRatings();
+  ratings[recipeId] = value;
+  localStorage.setItem('ratings', JSON.stringify(ratings));
+}
+
+function getComments(): Record<string, Comment[]> {
+  if (typeof window === 'undefined') return {};
+  return JSON.parse(localStorage.getItem('comments') || '{}');
+}
+
+function addComment(recipeId: string, comment: Comment) {
+  const allComments = getComments();
+  if (!allComments[recipeId]) {
+    allComments[recipeId] = [];
+  }
+  allComments[recipeId].unshift(comment);
+  localStorage.setItem('comments', JSON.stringify(allComments));
 }
 
 export default function RecipePage() {
@@ -96,6 +127,10 @@ export default function RecipePage() {
   const [michelinMode, setMichelinMode] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [addedToList, setAddedToList] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -106,6 +141,8 @@ export default function RecipePage() {
         setRecipe(data);
         setServings(data?.yield || 4);
         setIsFav(isFavorite(data?.id || ''));
+        setUserRating(getRatings()[data?.id || ''] || 0);
+        setComments(getComments()[data?.id || ''] || []);
         setLoading(false);
       })
       .catch(err => {
@@ -175,6 +212,25 @@ export default function RecipePage() {
     setTimeout(() => setAddedToList(false), 2000);
   };
 
+  const handleRate = (rating: number) => {
+    if (!recipe) return;
+    setUserRating(rating);
+    setRating(recipe.id, rating);
+  };
+
+  const handleAddComment = () => {
+    if (!recipe || !newComment.trim()) return;
+    const comment: Comment = {
+      id: Date.now().toString(),
+      author: 'Anonymous',
+      content: newComment.trim(),
+      date: new Date().toISOString()
+    };
+    addComment(recipe.id, comment);
+    setComments([comment, ...comments]);
+    setNewComment('');
+  };
+
   if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center text-white">Recipe not found</div>;
@@ -188,6 +244,20 @@ export default function RecipePage() {
         <span className="mx-2">›</span>
         <span className="text-gray-300">{recipe.title}</span>
       </nav>
+
+      <div className="relative h-64 md:h-96 bg-gray-900 rounded-xl overflow-hidden mb-6">
+        {recipe.imageUrl ? (
+          <Image 
+            src={recipe.imageUrl} 
+            alt={recipe.title} 
+            fill
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-6xl">🍽️</div>
+        )}
+      </div>
 
       <div className="flex items-start justify-between mb-4">
         <h1 className={`text-3xl md:text-4xl font-bold ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
@@ -204,6 +274,25 @@ export default function RecipePage() {
       </div>
       
       <p className="text-gray-400 mb-4">{recipe.description}</p>
+
+      {/* Rating */}
+      <div className="flex items-center gap-4 mb-4">
+        <span className="text-gray-400">Rate this recipe:</span>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={() => handleRate(star)}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(0)}
+              className="text-2xl hover:scale-125 transition-transform"
+            >
+              {star <= (hoverRating || userRating) ? '⭐' : '☆'}
+            </button>
+          ))}
+          {userRating > 0 && <span className="text-gray-400 ml-2">({userRating}/5)</span>}
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <span className="bg-gray-900 px-4 py-2 rounded-lg">⏱️ Prep: {recipe.prepTime} min</span>
@@ -270,6 +359,48 @@ export default function RecipePage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      {/* Comments Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">💬 Comments ({comments.length})</h2>
+        
+        {/* Add Comment */}
+        <div className="mb-6">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Share your thoughts about this recipe..."
+            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            rows={3}
+          />
+          <button
+            onClick={handleAddComment}
+            disabled={!newComment.trim()}
+            className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Post Comment
+          </button>
+        </div>
+
+        {/* Comments List */}
+        {comments.length === 0 ? (
+          <p className="text-gray-500">No comments yet. Be the first to share your thoughts!</p>
+        ) : (
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <div key={comment.id} className="bg-gray-900 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-white">{comment.author}</span>
+                  <span className="text-sm text-gray-500">
+                    {new Date(comment.date).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-gray-300">{comment.content}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
