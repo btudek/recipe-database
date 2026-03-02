@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const baseUrl = 'https://web-tau-weld-69.vercel.app';
+  const baseUrl = 'https://therecipedatabase.net';
   
   const staticPages = [
     '',
