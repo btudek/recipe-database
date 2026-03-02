@@ -69,7 +69,10 @@ export default function RecipePage() {
         console.log('Recipe data:', data);
         setRecipe(data);
         setServings(data.yield);
-        fetchComments(data.id);
+        setLoading(false);
+        if (data.id) {
+          fetchComments(data.id);
+        }
       })
       .catch(err => {
         console.error('Fetch error:', err);
