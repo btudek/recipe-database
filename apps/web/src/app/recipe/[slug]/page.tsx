@@ -211,8 +211,11 @@ export default function RecipePage() {
         <span className="text-gray-300">{recipe.title}</span>
       </nav>
 
-      {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{recipe.title}</h1>
+      {/* Title - changes when Michelin mode is on */}
+      <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
+        {recipe.title} 
+        {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
+      </h1>
       
       {/* Description */}
       <p className="text-gray-400 mb-4">{recipe.description}</p>
