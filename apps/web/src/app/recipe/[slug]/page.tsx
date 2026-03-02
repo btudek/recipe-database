@@ -1,15 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-
-// Load AdSense
-if (typeof window !== 'undefined') {
-  try {
-    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-  } catch (e) {}
-}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -46,8 +39,17 @@ interface Recipe {
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
 }
 
+// Load AdSense
+if (typeof window !== 'undefined') {
+  try {
+    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+  } catch (e) {}
+}
+
 export default function RecipePage() {
   const params = useParams();
+  const slug = params?.slug as string;
+  
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState(4);
@@ -60,20 +62,16 @@ export default function RecipePage() {
   const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
 
+  // Fetch recipe on mount
   useEffect(() => {
-    console.log('Fetching recipe:', params.slug);
-    console.log('API URL:', API_URL);
+    if (!slug) return;
     
     const storedUser = localStorage.getItem('user');
     if (storedUser) setUser(JSON.parse(storedUser));
     
-    fetch(`${API_URL}/api/recipes/${params.slug}`)
-      .then(res => {
-        console.log('Response status:', res.status);
-        return res.json();
-      })
+    fetch(`${API_URL}/api/recipes/${slug}`)
+      .then(res => res.json())
       .then(data => {
-        console.log('Recipe data:', data);
         setRecipe(data);
         setServings(data?.yield || 4);
         setLoading(false);
@@ -82,11 +80,10 @@ export default function RecipePage() {
         }
       })
       .catch(err => {
-        console.error('Fetch error:', err);
         setError(err.message);
         setLoading(false);
       });
-  }, [params.slug]);
+  }, [slug]);
 
   const fetchComments = async (recipeId: string) => {
     try {
@@ -152,42 +149,56 @@ export default function RecipePage() {
     } catch (e) { console.error(e); }
   };
 
+  // Computed values
+  const scaleFactor = servings / (recipe?.yield || 1);
+  
+  const scaledIngredients = useMemo(() => {
+    if (!recipe?.ingredients) return [];
+    return recipe.ingredients.map((ing) => {
+      const scaled = (ing.quantity || 0) * scaleFactor;
+      let displayQty: string;
+      
+      if (unitSystem === 'metric') {
+        // Show metric
+        if (ing.unit === 'g' && scaled >= 1000) {
+          displayQty = `${(scaled/1000).toFixed(2)}kg`;
+        } else if (ing.unit === 'ml' && scaled >= 1000) {
+          displayQty = `${(scaled/1000).toFixed(2)}L`;
+        } else if (ing.unit === 'g') {
+          displayQty = `${scaled.toFixed(0)}g`;
+        } else if (ing.unit === 'ml') {
+          displayQty = `${scaled.toFixed(0)}ml`;
+        } else {
+          displayQty = `${scaled.toFixed(1)} ${ing.unit || ''}`;
+        }
+      } else {
+        // Convert to US
+        if (ing.unit === 'g') {
+          if (scaled >= 453) {
+            displayQty = `${(scaled/453.6).toFixed(1)}lb`;
+          } else {
+            displayQty = `${(scaled/28.35).toFixed(0)}oz`;
+          }
+        } else if (ing.unit === 'ml') {
+          if (scaled >= 236) {
+            displayQty = `${(scaled/236.6).toFixed(1)}cup`;
+          } else if (scaled >= 14.8) {
+            displayQty = `${(scaled/14.8).toFixed(1)}tbsp`;
+          } else {
+            displayQty = `${(scaled/4.9).toFixed(1)}tsp`;
+          }
+        } else {
+          displayQty = `${scaled.toFixed(1)} ${ing.unit || ''}`;
+        }
+      }
+      
+      return `${displayQty} ${ing.name || ''}${ing.notes ? ', ' + ing.notes : ''}`;
+    });
+  }, [recipe?.ingredients, scaleFactor, unitSystem]);
+
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center">Recipe not found</div>;
-
-  const scaleFactor = servings / (recipe?.yield || 1);
-  
-  console.log('Rendering - servings:', servings, 'scaleFactor:', scaleFactor, 'unitSystem:', unitSystem, 'michelinMode:', michelinMode);
-  
-  // Unit conversion - DB stores metric, convert to US when needed
-  const convertUnit = (qty: number, unit: string, toUS: boolean) => {
-    if (!toUS) {
-      // Show metric as-is (g, ml)
-      if (unit === 'g' && qty >= 1000) return `${(qty/1000).toFixed(2)}kg`;
-      if (unit === 'ml' && qty >= 1000) return `${(qty/1000).toFixed(2)}L`;
-      return `${qty.toFixed(0)}${unit ? ' ' + unit : ''}`;
-    }
-    // Convert to US
-    if (unit === 'g' || unit === 'gram' || unit === 'grams') {
-      if (qty >= 453) return `${(qty/453.6).toFixed(1)}lb`;
-      return `${(qty/28.35).toFixed(0)}oz`;
-    }
-    if (unit === 'ml' || unit === 'milliliter') {
-      if (qty >= 236) return `${(qty/236.6).toFixed(1)}cup`;
-      if (qty >= 14.8) return `${(qty/14.8).toFixed(1)}tbsp`;
-      return `${(qty/4.9).toFixed(1)}tsp`;
-    }
-    return `${qty.toFixed(0)} ${unit}`;
-  };
-  
-  const scaledIngredients = (recipe?.ingredients || []).map((ing: Ingredient) => {
-    const scaled = (ing.quantity || 0) * scaleFactor;
-    const displayQty = convertUnit(scaled, ing.unit || '', unitSystem === 'us');
-    return `${displayQty} ${ing.name || ''}${ing.notes ? ', ' + ing.notes : ''}`;
-  });
-  
-  console.log('Scaled ingredients:', scaledIngredients.slice(0, 2));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -267,6 +278,7 @@ export default function RecipePage() {
               <span>{ing}</span>
             </li>
           ))}
+          {scaledIngredients.length === 0 && <li className="text-gray-500">No ingredients</li>}
         </ul>
       </section>
 
@@ -295,6 +307,7 @@ export default function RecipePage() {
               </div>
             </li>
           ))}
+          {(!recipe.steps || recipe.steps.length === 0) && <li className="text-gray-500">No instructions</li>}
         </ol>
       </section>
 
