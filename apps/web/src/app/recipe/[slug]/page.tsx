@@ -186,6 +186,8 @@ export default function RecipePage() {
     const displayQty = convertUnit(scaled, ing.unit || '', unitSystem === 'us');
     return `${displayQty} ${ing.name || ''}${ing.notes ? ', ' + ing.notes : ''}`;
   });
+  
+  console.log('Scaled ingredients:', scaledIngredients.slice(0, 2));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
