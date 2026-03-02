@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -17,7 +17,7 @@ interface Recipe {
   cuisine: { name: string; slug: string };
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   
@@ -48,7 +48,7 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">
+      <h1 className="text-3xl font-bold mb-6 text-white">
         {query ? `Search results for "${query}"` : 'Search Recipes'}
       </h1>
 
@@ -60,7 +60,7 @@ export default function SearchPage() {
             name="q"
             defaultValue={query}
             placeholder="Search recipes, ingredients, cuisines..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <button
             type="submit"
@@ -73,18 +73,18 @@ export default function SearchPage() {
 
       {/* Results */}
       {loading ? (
-        <p className="text-gray-500">Searching...</p>
+        <p className="text-gray-400">Searching...</p>
       ) : recipes.length === 0 && query ? (
-        <p className="text-gray-500">No recipes found for "{query}"</p>
+        <p className="text-gray-400">No recipes found for "{query}"</p>
       ) : recipes.length > 0 ? (
         <div className="space-y-4">
           {recipes.map((recipe) => (
             <Link 
               key={recipe.id} 
               href={`/recipe/${recipe.slug}`}
-              className="flex gap-4 p-4 bg-white rounded-lg border hover:border-primary-300 transition-colors"
+              className="flex gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-primary-600 transition-colors"
             >
-              <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+              <div className="w-32 h-24 bg-gray-800 rounded flex items-center justify-center flex-shrink-0">
                 {recipe.imageUrl ? (
                   <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover rounded" />
                 ) : (
@@ -92,19 +92,27 @@ export default function SearchPage() {
                 )}
               </div>
               <div>
-                <h3 className="font-semibold text-lg">{recipe.title}</h3>
-                <p className="text-gray-600 text-sm line-clamp-2">{recipe.description}</p>
+                <h3 className="font-semibold text-lg text-white">{recipe.title}</h3>
+                <p className="text-gray-400 text-sm line-clamp-2">{recipe.description}</p>
                 <div className="flex gap-4 mt-2 text-sm text-gray-500">
                   <span>⏱️ {recipe.prepTime + recipe.cookTime} min</span>
-                  <span>{recipe.cuisine.name}</span>
+                  <span>{recipe.cuisine?.name}</span>
                 </div>
               </div>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">Enter a search term to find recipes.</p>
+        <p className="text-gray-400">Enter a search term to find recipes.</p>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-white">Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
