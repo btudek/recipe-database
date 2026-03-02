@@ -151,9 +151,30 @@ export default function RecipePage() {
 
   const scaleFactor = servings / (recipe?.yield || 1);
   
+  // Simple unit conversion
+  const convertUnit = (qty: number, unit: string, toMetric: boolean) => {
+    if (toMetric) {
+      if (unit === 'oz') return `${(qty * 28.35).toFixed(0)}g`;
+      if (unit === 'lb') return `${(qty * 453.6).toFixed(0)}g`;
+      if (unit === 'cup') return `${(qty * 236.6).toFixed(0)}ml`;
+      if (unit === 'tbsp') return `${(qty * 14.8).toFixed(1)}ml`;
+      if (unit === 'tsp') return `${(qty * 4.9).toFixed(1)}ml`;
+      if (unit === 'fl oz') return `${(qty * 29.6).toFixed(0)}ml`;
+    } else {
+      if (unit === 'g' && qty >= 1000) return `${(qty/1000).toFixed(2)}kg`;
+      if (unit === 'g') return `${qty.toFixed(0)}g`;
+      if (unit === 'ml' && qty >= 236) return `${(qty/236.6).toFixed(1)}cup`;
+      if (unit === 'ml') return `${qty.toFixed(0)}ml`;
+    }
+    return `${qty.toFixed(1)} ${unit}`;
+  };
+  
   const scaledIngredients = (recipe?.ingredients || []).map((ing: Ingredient) => {
     const scaled = (ing.quantity || 0) * scaleFactor;
-    return `${scaled.toFixed(1)} ${ing.unit || ''} ${ing.name || ''}${ing.notes ? `, ${ing.notes}` : ''}`;
+    const displayQty = unitSystem === 'metric' 
+      ? convertUnit(scaled, ing.unit || '', true)
+      : `${scaled.toFixed(1)} ${ing.unit || ''}`;
+    return `${displayQty} ${ing.name || ''}${ing.notes ? `, ${ing.notes}` : ''}`;
   });
 
   return (
