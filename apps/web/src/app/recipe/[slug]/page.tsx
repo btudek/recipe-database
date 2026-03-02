@@ -1,96 +1,329 @@
-import { Metadata } from 'next';
-import { RecipeContent } from './RecipeContent';
+'use client';
 
-interface Props {
-  params: { slug: string };
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+interface Ingredient {
+  name: string;
+  quantity: number;
+  unit: string;
+  notes?: string;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // In production, fetch recipe data
-  const recipe = {
-    title: 'Classic Chicken Parmesan',
-    description: 'A crispy, golden chicken cutlet topped with marinara sauce and melted mozzarella cheese.',
-    seoDescription: 'Learn how to make the best Chicken Parmesan at home with this easy recipe. Perfectly crispy chicken, rich marinara, and gooey cheese.',
-    imageUrl: '/images/chicken-parmesan.jpg',
-  };
-
-  return {
-    title: recipe.title,
-    description: recipe.seoDescription,
-    openGraph: {
-      title: recipe.title,
-      description: recipe.seoDescription,
-      images: [recipe.imageUrl],
-      type: 'article',
-    },
-  };
+interface Step {
+  stepNumber: number;
+  instruction: string;
+  michelinNote?: string;
 }
 
-// JSON-LD for Recipe Schema
-export function generateJsonLd(recipe: any) {
-  return {
-    '@context': 'https://schema.org/',
-    '@type': 'Recipe',
-    name: recipe.title,
-    image: recipe.imageUrl,
-    description: recipe.seoDescription,
-    prepTime: `PT${recipe.prepTime}M`,
-    cookTime: `PT${recipe.cookTime}M`,
-    totalTime: `PT${recipe.prepTime + recipe.cookTime}M`,
-    recipeYield: `${recipe.yield} servings`,
-    recipeCategory: recipe.category?.name,
-    recipeCuisine: recipe.cuisine?.name,
-    recipeIngredient: recipe.ingredients?.map((i: any) => 
-      `${i.quantity} ${i.unit} ${i.name}`
-    ),
-    recipeInstructions: recipe.steps?.map((s: any, idx: number) => ({
-      '@type': 'HowToStep',
-      position: idx + 1,
-      text: s.instruction,
-    })),
-  };
+interface Recipe {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  seoDescription: string;
+  prepTime: number;
+  cookTime: number;
+  totalTime: number;
+  yield: number;
+  cuisine: { name: string; slug: string };
+  category: { name: string; slug: string };
+  imageUrl: string | null;
+  ingredients: Ingredient[];
+  steps: Step[];
+  proTips?: string;
+  storageInfo?: string;
+  nutrition?: { calories: number; protein: number; carbs: number; fat: number };
 }
 
-export default function RecipePage({ params }: Props) {
-  // In production, fetch from database
-  const recipe = {
-    slug: params.slug,
-    title: 'Classic Chicken Parmesan',
-    description: 'A crispy, golden chicken cutlet topped with marinara sauce and melted mozzarella cheese.',
-    seoDescription: 'Learn how to make the best Chicken Parmesan at home with this easy recipe. Perfectly crispy chicken, rich marinara, and gooey cheese.',
-    prepTime: 15,
-    cookTime: 30,
-    totalTime: 45,
-    yield: 4,
-    cuisine: { name: 'Italian', slug: 'italian' },
-    category: { name: 'Dinner', slug: 'dinner' },
-    imageUrl: '/images/chicken-parmesan.jpg',
-    ingredients: [
-      { name: 'chicken breast', quantity: 4, unit: 'piece', notes: 'butterflied' },
-      { name: 'breadcrumbs', quantity: 200, unit: 'g' },
-      { name: 'parmesan cheese', quantity: 50, unit: 'g', notes: 'grated' },
-      { name: 'egg', quantity: 2, unit: 'piece' },
-      { name: 'flour', quantity: 100, unit: 'g' },
-      { name: 'marinara sauce', quantity: 400, unit: 'g' },
-      { name: 'mozzarella', quantity: 150, unit: 'g', notes: 'sliced' },
-      { name: 'olive oil', quantity: 30, unit: 'ml' },
-      { name: 'garlic', quantity: 3, unit: 'clove' },
-      { name: 'basil', quantity: 10, unit: 'g', notes: 'fresh' },
-      { name: 'salt', quantity: 1, unit: 'tsp' },
-      { name: 'pepper', quantity: 0.5, unit: 'tsp' },
-    ],
-    steps: [
-      { stepNumber: 1, instruction: 'Preheat oven to 425°F (220°C). Season chicken with salt and pepper.', michelinNote: 'Season chicken 15 minutes ahead for even flavor distribution.' },
-      { stepNumber: 2, instruction: 'Set up breading station: flour, beaten eggs, breadcrumbs mixed with parmesan.', michelinNote: 'Use one hand for wet, one for dry to prevent clumping.' },
-      { stepNumber: 3, instruction: 'Dredge chicken in flour, then egg, then breadcrumbs. Press firmly.', michelinNote: 'For extra crunch, double-bread: egg, flour, egg, breadcrumbs.' },
-      { stepNumber: 4, instruction: 'Heat olive oil in oven-safe skillet. Sear chicken 3 minutes per side until golden.', michelinNote: 'Don\'t move the chicken while searing. Flip only once.' },
-      { stepNumber: 5, instruction: 'Top with marinara and mozzarella. Bake 15 minutes until cheese is melted and bubbly.', michelinNote: 'Finish under broiler for golden brown spots on cheese.' },
-      { stepNumber: 6, instruction: 'Garnish with fresh basil. Let rest 5 minutes before serving.', michelinNote: 'Rest allows juices to redistribute. Tent with foil.' },
-    ],
-    proTips: 'For extra crispy coating, use panko breadcrumbs and toast them in a dry pan first.',
-    storageInfo: 'Refrigerate leftovers up to 4 days. Reheat in 350°F oven for best texture.',
-    nutrition: { calories: 450, protein: 35, carbs: 28, fat: 22 },
+export default function RecipePage() {
+  const params = useParams();
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [servings, setServings] = useState(4);
+  const [unitSystem, setUnitSystem] = useState<'us' | 'metric'>('us');
+  const [michelinMode, setMichelinMode] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [rating, setRating] = useState(0);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setUser(JSON.parse(storedUser));
+    
+    fetch(`${API_URL}/api/recipes/${params.slug}`)
+      .then(res => res.json())
+      .then(data => {
+        setRecipe(data);
+        setServings(data.yield);
+        fetchComments(data.id);
+      })
+      .catch(err => console.error(err));
+  }, [params.slug]);
+
+  const fetchComments = async (recipeId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/recipes/${recipeId}/comments`);
+      const data = await res.json();
+      setComments(data);
+    } catch (e) { console.error(e); }
   };
 
-  return <RecipeContent recipe={recipe} />;
+  const handleSave = async () => {
+    if (!user) {
+      alert('Please login to save recipes');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_URL}/api/recipes/${recipe?.id}/save`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSaved(!saved);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleRate = async (value: number) => {
+    if (!user) {
+      alert('Please login to rate');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_URL}/api/recipes/${recipe?.id}/rate`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ value }),
+      });
+      setRating(value);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      alert('Please login to comment');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/recipes/${recipe?.id}/comments`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: newComment }),
+      });
+      const comment = await res.json();
+      setComments([comment, ...comments]);
+      setNewComment('');
+    } catch (e) { console.error(e); }
+  };
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (!recipe) return <div className="p-8 text-center">Recipe not found</div>;
+
+  const scaleFactor = servings / recipe.yield;
+  
+  const scaledIngredients = recipe.ingredients.map(ing => {
+    const scaled = ing.quantity * scaleFactor;
+    return `${scaled.toFixed(1)} ${ing.unit} ${ing.name}${ing.notes ? `, ${ing.notes}` : ''}`;
+  });
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      <nav className="text-sm text-gray-500 mb-4">
+        <Link href="/" className="hover:text-primary-400">Home</Link>
+        <span className="mx-2">›</span>
+        <Link href={`/cuisine/${recipe.cuisine.slug}`} className="hover:text-primary-400">{recipe.cuisine.name}</Link>
+        <span className="mx-2">›</span>
+        <span className="text-gray-300">{recipe.title}</span>
+      </nav>
+
+      {/* Title */}
+      <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{recipe.title}</h1>
+      
+      {/* Description */}
+      <p className="text-gray-400 mb-4">{recipe.description}</p>
+
+      {/* Times & Save */}
+      <div className="flex flex-wrap gap-4 mb-6 text-sm">
+        <span className="bg-gray-900 px-4 py-2 rounded-lg">⏱️ Prep: {recipe.prepTime} min</span>
+        <span className="bg-gray-900 px-4 py-2 rounded-lg">🍳 Cook: {recipe.cookTime} min</span>
+        <span className="bg-gray-900 px-4 py-2 rounded-lg">⏰ Total: {recipe.totalTime} min</span>
+        <button
+          onClick={handleSave}
+          className={`px-4 py-2 rounded-lg ${saved ? 'bg-green-600 text-white' : 'bg-gray-900 hover:bg-gray-800'}`}
+        >
+          {saved ? '✓ Saved' : '♡ Save'}
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="bg-gray-900 px-4 py-2 rounded-lg hover:bg-gray-800"
+        >
+          🖨️ Print
+        </button>
+      </div>
+
+      {/* Rating */}
+      <div className="mb-6">
+        <span className="text-sm text-gray-500 mr-2">Rate this recipe:</span>
+        {[1,2,3,4,5].map(v => (
+          <button key={v} onClick={() => handleRate(v)} className="text-2xl mr-1">
+            {v <= rating ? '⭐' : '☆'}
+          </button>
+        ))}
+      </div>
+
+      {/* Controls */}
+      <div className="bg-gray-900 rounded-xl p-6 mb-8">
+        <div className="flex flex-wrap gap-6 items-center">
+          <div className="flex items-center gap-4">
+            <span className="font-medium">Servings:</span>
+            <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full">−</button>
+            <span className="font-semibold">{servings}</span>
+            <button onClick={() => setServings(servings + 1)} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full">+</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Units:</span>
+            <button onClick={() => setUnitSystem('us')} className={`px-3 py-1 rounded ${unitSystem === 'us' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700'}`}>US</button>
+            <button onClick={() => setUnitSystem('metric')} className={`px-3 py-1 rounded ${unitSystem === 'metric' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700'}`}>Metric</button>
+          </div>
+          <button
+            onClick={() => setMichelinMode(!michelinMode)}
+            className={`px-4 py-2 rounded-lg border ${michelinMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-800 border-gray-700'}`}
+          >
+            👨‍🍳 Michelin Mode
+          </button>
+        </div>
+      </div>
+
+      {/* Ingredients */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Ingredients</h2>
+        <ul className="space-y-2">
+          {scaledIngredients.map((ing, i) => (
+            <li key={i} className="flex justify-between py-2 border-b border-gray-800">
+              <span>{ing}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Ad placeholder */}
+      <div className="my-8 bg-gray-900 py-8 text-center text-gray-600">
+        Advertisement
+      </div>
+
+      {/* Instructions */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Instructions</h2>
+        <ol className="space-y-6">
+          {recipe.steps.map(step => (
+            <li key={step.stepNumber} className="flex gap-4 pb-4 border-b border-gray-800">
+              <span className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">
+                {step.stepNumber}
+              </span>
+              <div>
+                <p className="text-gray-300">{step.instruction}</p>
+                {michelinMode && step.michelinNote && (
+                  <div className="mt-2 p-3 bg-amber-900/30 border border-amber-700 rounded-lg">
+                    <span className="text-amber-400 font-medium text-sm">👨‍🍳 Chef's Note: </span>
+                    <span className="text-amber-300 text-sm">{step.michelinNote}</span>
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Pro Tips */}
+      {recipe.proTips && (
+        <section className="mb-8 p-4 bg-blue-900/30 border border-blue-700 rounded-lg">
+          <h3 className="font-semibold text-blue-400 mb-2">💡 Pro Tips</h3>
+          <p className="text-blue-300">{recipe.proTips}</p>
+        </section>
+      )}
+
+      {/* Storage */}
+      {recipe.storageInfo && (
+        <section className="mb-8 p-4 bg-gray-900 rounded-lg">
+          <h3 className="font-semibold text-gray-300 mb-2">📦 Storage & Reheating</h3>
+          <p className="text-gray-400">{recipe.storageInfo}</p>
+        </section>
+      )}
+
+      {/* Nutrition */}
+      {recipe.nutrition && (
+        <section className="mb-8">
+          <h3 className="font-semibold text-gray-300 mb-3">Nutrition per serving</h3>
+          <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="bg-gray-900 rounded-lg p-3">
+              <div className="text-2xl font-bold text-white">{recipe.nutrition.calories}</div>
+              <div className="text-xs text-gray-500">Calories</div>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-3">
+              <div className="text-2xl font-bold text-white">{recipe.nutrition.protein}g</div>
+              <div className="text-xs text-gray-500">Protein</div>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-3">
+              <div className="text-2xl font-bold text-white">{recipe.nutrition.carbs}g</div>
+              <div className="text-xs text-gray-500">Carbs</div>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-3">
+              <div className="text-2xl font-bold text-white">{recipe.nutrition.fat}g</div>
+              <div className="text-xs text-gray-500">Fat</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Comments Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Comments ({comments.length})</h2>
+        
+        {/* Add Comment */}
+        {user ? (
+          <form onSubmit={handleComment} className="mb-6">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg mb-2 text-white"
+              rows={3}
+              required
+            />
+            <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg">
+              Post Comment
+            </button>
+          </form>
+        ) : (
+          <p className="mb-4 text-gray-500"><Link href="/login" className="text-primary-400">Login</Link> to post a comment</p>
+        )}
+
+        {/* Comments List */}
+        <div className="space-y-4">
+          {comments.map(comment => (
+            <div key={comment.id} className="p-4 bg-gray-900 rounded-lg">
+              <div className="font-medium text-white">{comment.user?.username || 'Anonymous'}</div>
+              <p className="text-gray-400">{comment.content}</p>
+            </div>
+          ))}
+          {comments.length === 0 && <p className="text-gray-500">No comments yet. Be the first!</p>}
+        </div>
+      </section>
+    </div>
+  );
 }
