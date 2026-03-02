@@ -11,7 +11,7 @@ export function AdSense({ slot, format = 'auto' }: AdProps) {
     <ins
       className="adsbygoogle"
       style={{ display: 'block' }}
-      data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+      data-ad-client="ca-pub-1794557219157944"
       data-ad-slot={slot}
       data-ad-format={format}
       data-full-width-responsive="true"

@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
+// Load AdSense
+if (typeof window !== 'undefined') {
+  try {
+    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+  } catch (e) {}
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 interface Ingredient {
@@ -259,8 +266,8 @@ export default function RecipePage() {
       </section>
 
       {/* Ad placeholder */}
-      <div className="my-8 bg-gray-900 py-8 text-center text-gray-600">
-        Advertisement
+      <div className="my-8 bg-gray-900 py-4 flex items-center justify-center">
+        <ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="ca-pub-1794557219157944" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto"></ins>
       </div>
 
       {/* Instructions */}
