@@ -4,15 +4,29 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://web-tau-weld-69.vercel.app'),
   title: {
-    default: 'Recipe Database',
+    default: 'Recipe Database - Discover Your Next Favorite Recipe',
     template: '%s | Recipe Database',
   },
-  description: 'Discover and cook amazing recipes with detailed instructions, portion scaling, and chef-quality techniques.',
+  description: 'Explore thousands of original recipes with precise measurements, portion scaling, US/Metric unit conversion, and chef-quality Michelin mode techniques.',
+  keywords: ['recipes', 'cooking', 'food', 'meal planning', 'chef tips', 'michelin mode', 'easy recipes', 'dinner ideas'],
   openGraph: {
     type: 'website',
     locale: 'en_US',
     siteName: 'Recipe Database',
+    title: 'Recipe Database - Discover Your Next Favorite Recipe',
+    description: 'Explore thousands of original recipes with precise measurements, portion scaling, and chef-quality techniques.',
+    url: 'https://web-tau-weld-69.vercel.app',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Recipe Database - Discover Your Next Favorite Recipe',
+    description: 'Explore thousands of original recipes with precise measurements, portion scaling, and chef-quality techniques.',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
