@@ -158,6 +158,8 @@ export default function RecipePage() {
 
   const scaleFactor = servings / (recipe?.yield || 1);
   
+  console.log('Rendering - servings:', servings, 'scaleFactor:', scaleFactor, 'unitSystem:', unitSystem, 'michelinMode:', michelinMode);
+  
   // Simple unit conversion
   const convertUnit = (qty: number, unit: string, toMetric: boolean) => {
     if (toMetric) {
