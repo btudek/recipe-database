@@ -38,13 +38,6 @@ interface Recipe {
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
 }
 
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  date: string;
-}
-
 // Local storage helpers
 function getFavorites(): string[] {
   if (typeof window === 'undefined') return [];
@@ -66,6 +59,18 @@ function removeFromFavorites(recipeId: string) {
 
 function isFavorite(recipeId: string): boolean {
   return getFavorites().includes(recipeId);
+}
+
+function getRecentlyViewed(): { id: string; title: string; slug: string; viewedAt: string }[] {
+  if (typeof window === 'undefined') return [];
+  return JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+}
+
+function addToRecentlyViewed(recipeId: string, recipeTitle: string, recipeSlug: string) {
+  let recent = getRecentlyViewed().filter((r: any) => r.id !== recipeId);
+  recent.unshift({ id: recipeId, title: recipeTitle, slug: recipeSlug, viewedAt: new Date().toISOString() });
+  recent = recent.slice(0, 10); // Keep only 10
+  localStorage.setItem('recentlyViewed', JSON.stringify(recent));
 }
 
 function getShoppingList(): any[] {
@@ -102,12 +107,12 @@ function setRating(recipeId: string, value: number) {
   localStorage.setItem('ratings', JSON.stringify(ratings));
 }
 
-function getComments(): Record<string, Comment[]> {
+function getComments(): Record<string, any[]> {
   if (typeof window === 'undefined') return {};
   return JSON.parse(localStorage.getItem('comments') || '{}');
 }
 
-function addComment(recipeId: string, comment: Comment) {
+function addComment(recipeId: string, comment: any) {
   const allComments = getComments();
   if (!allComments[recipeId]) {
     allComments[recipeId] = [];
@@ -129,7 +134,7 @@ export default function RecipePage() {
   const [addedToList, setAddedToList] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
 
@@ -143,6 +148,12 @@ export default function RecipePage() {
         setIsFav(isFavorite(data?.id || ''));
         setUserRating(getRatings()[data?.id || ''] || 0);
         setComments(getComments()[data?.id || ''] || []);
+        
+        // Add to recently viewed
+        if (data) {
+          addToRecentlyViewed(data.id, data.title, data.slug);
+        }
+        
         setLoading(false);
       })
       .catch(err => {
@@ -220,7 +231,7 @@ export default function RecipePage() {
 
   const handleAddComment = () => {
     if (!recipe || !newComment.trim()) return;
-    const comment: Comment = {
+    const comment = {
       id: Date.now().toString(),
       author: 'Anonymous',
       content: newComment.trim(),
@@ -229,6 +240,10 @@ export default function RecipePage() {
     addComment(recipe.id, comment);
     setComments([comment, ...comments]);
     setNewComment('');
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
@@ -264,13 +279,22 @@ export default function RecipePage() {
           {recipe.title}
           {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
         </h1>
-        <button
-          onClick={toggleFavorite}
-          className="text-3xl ml-4 hover:scale-110 transition-transform"
-          title={isFav ? "Remove from favorites" : "Add to favorites"}
-        >
-          {isFav ? '❤️' : '🤍'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handlePrint}
+            className="px-3 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+            title="Print recipe"
+          >
+            🖨️
+          </button>
+          <button
+            onClick={toggleFavorite}
+            className="text-3xl ml-2 hover:scale-110 transition-transform"
+            title={isFav ? "Remove from favorites" : "Add to favorites"}
+          >
+            {isFav ? '❤️' : '🤍'}
+          </button>
+        </div>
       </div>
       
       <p className="text-gray-400 mb-4">{recipe.description}</p>
@@ -365,7 +389,6 @@ export default function RecipePage() {
       <section className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">💬 Comments ({comments.length})</h2>
         
-        {/* Add Comment */}
         <div className="mb-6">
           <textarea
             value={newComment}
@@ -383,7 +406,6 @@ export default function RecipePage() {
           </button>
         </div>
 
-        {/* Comments List */}
         {comments.length === 0 ? (
           <p className="text-gray-500">No comments yet. Be the first to share your thoughts!</p>
         ) : (

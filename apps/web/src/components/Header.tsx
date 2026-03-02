@@ -38,6 +38,9 @@ export function Header() {
             <Link href="/categories" className="text-gray-300 hover:text-white">
               Categories
             </Link>
+            <Link href="/recently-viewed" className="text-gray-300 hover:text-white">
+              🕐 Recent
+            </Link>
             <Link href="/favorites" className="text-gray-300 hover:text-white">
               ❤️ Favorites
             </Link>
