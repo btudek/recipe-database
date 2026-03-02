@@ -117,8 +117,12 @@ export default function HomePage() {
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link href={`/recipe/${recipe.slug}`} className="bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all">
-      <div className="h-48 bg-gray-800 flex items-center justify-center">
-        <span className="text-6xl">🍽️</span>
+      <div className="h-48 bg-gray-800 flex items-center justify-center overflow-hidden">
+        {recipe.imageUrl ? (
+          <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-6xl">🍽️</span>
+        )}
       </div>
       <div className="p-4">
         <span className="text-sm text-primary-400 font-medium">{recipe.cuisine?.name}</span>
