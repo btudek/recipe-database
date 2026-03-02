@@ -37,6 +37,54 @@ interface Recipe {
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
 }
 
+// Local storage helpers
+function getFavorites(): string[] {
+  if (typeof window === 'undefined') return [];
+  return JSON.parse(localStorage.getItem('favorites') || '[]');
+}
+
+function addToFavorites(recipeId: string) {
+  const favs = getFavorites();
+  if (!favs.includes(recipeId)) {
+    favs.push(recipeId);
+    localStorage.setItem('favorites', JSON.stringify(favs));
+  }
+}
+
+function removeFromFavorites(recipeId: string) {
+  const favs = getFavorites().filter(id => id !== recipeId);
+  localStorage.setItem('favorites', JSON.stringify(favs));
+}
+
+function isFavorite(recipeId: string): boolean {
+  return getFavorites().includes(recipeId);
+}
+
+function getShoppingList(): any[] {
+  if (typeof window === 'undefined') return [];
+  return JSON.parse(localStorage.getItem('shoppingList') || '[]');
+}
+
+function addToShoppingList(recipe: Recipe, scaledIngredients: string[]) {
+  const list = getShoppingList();
+  const existingIndex = list.findIndex((item: any) => item.recipeId === recipe.id);
+  
+  if (existingIndex >= 0) {
+    // Update existing
+    list[existingIndex].ingredients = scaledIngredients;
+  } else {
+    // Add new
+    list.push({
+      recipeId: recipe.id,
+      recipeTitle: recipe.title,
+      ingredients: scaledIngredients,
+      addedAt: new Date().toISOString()
+    });
+  }
+  
+  localStorage.setItem('shoppingList', JSON.stringify(list));
+}
+
 export default function RecipePage() {
   const params = useParams();
   const slug = params?.slug as string;
@@ -46,6 +94,8 @@ export default function RecipePage() {
   const [servings, setServings] = useState(4);
   const [unitSystem, setUnitSystem] = useState<'us' | 'metric'>('us');
   const [michelinMode, setMichelinMode] = useState(false);
+  const [isFav, setIsFav] = useState(false);
+  const [addedToList, setAddedToList] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -55,6 +105,7 @@ export default function RecipePage() {
       .then(data => {
         setRecipe(data);
         setServings(data?.yield || 4);
+        setIsFav(isFavorite(data?.id || ''));
         setLoading(false);
       })
       .catch(err => {
@@ -107,6 +158,23 @@ export default function RecipePage() {
     });
   }, [recipe?.ingredients, scaleFactor, unitSystem]);
 
+  const toggleFavorite = () => {
+    if (!recipe) return;
+    if (isFav) {
+      removeFromFavorites(recipe.id);
+    } else {
+      addToFavorites(recipe.id);
+    }
+    setIsFav(!isFav);
+  };
+
+  const handleAddToShoppingList = () => {
+    if (!recipe) return;
+    addToShoppingList(recipe, scaledIngredients);
+    setAddedToList(true);
+    setTimeout(() => setAddedToList(false), 2000);
+  };
+
   if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center text-white">Recipe not found</div>;
@@ -121,10 +189,19 @@ export default function RecipePage() {
         <span className="text-gray-300">{recipe.title}</span>
       </nav>
 
-      <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
-        {recipe.title}
-        {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
-      </h1>
+      <div className="flex items-start justify-between mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
+          {recipe.title}
+          {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
+        </h1>
+        <button
+          onClick={toggleFavorite}
+          className="text-3xl ml-4 hover:scale-110 transition-transform"
+          title={isFav ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isFav ? '❤️' : '🤍'}
+        </button>
+      </div>
       
       <p className="text-gray-400 mb-4">{recipe.description}</p>
 
@@ -152,6 +229,12 @@ export default function RecipePage() {
             className={`px-4 py-2 rounded-lg border ${michelinMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-800 border-gray-700 text-white'}`}
           >
             👨‍🍳 Michelin Mode
+          </button>
+          <button
+            onClick={handleAddToShoppingList}
+            className={`px-4 py-2 rounded-lg border ${addedToList ? 'bg-green-600 text-white border-green-600' : 'bg-gray-800 border-gray-700 text-white'}`}
+          >
+            {addedToList ? '✅ Added!' : '🛒 Add to List'}
           </button>
         </div>
       </div>

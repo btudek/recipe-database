@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getRecipes, getCuisines } from '@/lib/supabase';
 
 interface Recipe {
@@ -117,9 +118,16 @@ export default function HomePage() {
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link href={`/recipe/${recipe.slug}`} className="bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all">
-      <div className="h-48 bg-gray-800 flex items-center justify-center overflow-hidden">
+      <div className="h-48 bg-gray-800 flex items-center justify-center overflow-hidden relative">
         {recipe.imageUrl ? (
-          <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
+          <Image 
+            src={recipe.imageUrl} 
+            alt={recipe.title} 
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+            loading="lazy"
+          />
         ) : (
           <span className="text-6xl">🍽️</span>
         )}
