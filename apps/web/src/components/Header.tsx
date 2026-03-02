@@ -21,24 +21,24 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 no-print">
+    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 no-print">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">🍳</span>
-            <span className="font-bold text-xl text-gray-900">Recipe Database</span>
+            <span className="font-bold text-xl text-white">Recipe Database</span>
           </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/cuisines" className="text-gray-600 hover:text-gray-900">
+            <Link href="/cuisines" className="text-gray-300 hover:text-white">
               Cuisines
             </Link>
-            <Link href="/categories" className="text-gray-600 hover:text-gray-900">
+            <Link href="/categories" className="text-gray-300 hover:text-white">
               Categories
             </Link>
-            <Link href="/trending" className="text-gray-600 hover:text-gray-900">
+            <Link href="/trending" className="text-gray-300 hover:text-white">
               Trending
             </Link>
           </nav>
@@ -47,7 +47,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             <Link 
               href="/search"
-              className="p-2 text-gray-500 hover:text-gray-700"
+              className="p-2 text-gray-400 hover:text-white"
               aria-label="Search"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,12 +57,12 @@ export function Header() {
             
             {user ? (
               <div className="flex items-center gap-3">
-                <Link href="/profile" className="text-sm text-gray-600 hover:text-gray-900">
+                <Link href="/profile" className="text-sm text-gray-300 hover:text-white">
                   Hi, {user.username}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-sm text-gray-600 hover:text-gray-900"
+                  className="text-sm text-gray-400 hover:text-white"
                 >
                   Logout
                 </button>
@@ -71,7 +71,7 @@ export function Header() {
               <>
                 <Link 
                   href="/login"
-                  className="text-sm text-gray-600 hover:text-gray-900"
+                  className="text-sm text-gray-300 hover:text-white"
                 >
                   Sign In
                 </Link>

@@ -131,7 +131,7 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-primary-600">Home</Link>
-        <span className="mx-2">›</Link>
+        <span className="mx-2">›</span>
         <Link href={`/cuisine/${recipe.cuisine.slug}`} className="hover:text-primary-600">{recipe.cuisine.name}</Link>
         <span className="mx-2">›</span>
         <span className="text-gray-700">{recipe.title}</span>
