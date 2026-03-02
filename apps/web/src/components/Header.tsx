@@ -57,7 +57,9 @@ export function Header() {
             
             {user ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Hi, {user.username}</span>
+                <Link href="/profile" className="text-sm text-gray-600 hover:text-gray-900">
+                  Hi, {user.username}
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-sm text-gray-600 hover:text-gray-900"
