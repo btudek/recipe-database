@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { getRecipe } from '@/lib/supabase';
 
 interface Ingredient {
   name: string;
@@ -24,7 +23,6 @@ interface Recipe {
   slug: string;
   title: string;
   description: string;
-  seoDescription: string;
   prepTime: number;
   cookTime: number;
   totalTime: number;
@@ -39,13 +37,6 @@ interface Recipe {
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
 }
 
-// Load AdSense
-if (typeof window !== 'undefined') {
-  try {
-    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-  } catch (e) {}
-}
-
 export default function RecipePage() {
   const params = useParams();
   const slug = params?.slug as string;
@@ -55,29 +46,16 @@ export default function RecipePage() {
   const [servings, setServings] = useState(4);
   const [unitSystem, setUnitSystem] = useState<'us' | 'metric'>('us');
   const [michelinMode, setMichelinMode] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [rating, setRating] = useState(0);
-  const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
 
-  // Fetch recipe on mount
   useEffect(() => {
     if (!slug) return;
     
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) setUser(JSON.parse(storedUser));
-    
-    fetch(`${API_URL}/api/recipes/${slug}`)
-      .then(res => res.json())
+    getRecipe(slug)
       .then(data => {
         setRecipe(data);
         setServings(data?.yield || 4);
         setLoading(false);
-        if (data?.id) {
-          fetchComments(data.id);
-        }
       })
       .catch(err => {
         setError(err.message);
@@ -85,71 +63,6 @@ export default function RecipePage() {
       });
   }, [slug]);
 
-  const fetchComments = async (recipeId: string) => {
-    try {
-      const res = await fetch(`${API_URL}/api/recipes/${recipeId}/comments`);
-      const data = await res.json();
-      setComments(data);
-    } catch (e) { console.error(e); }
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      alert('Please login to save recipes');
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/api/recipes/${recipe?.id}/save`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSaved(!saved);
-    } catch (e) { console.error(e); }
-  };
-
-  const handleRate = async (value: number) => {
-    if (!user) {
-      alert('Please login to rate');
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/api/recipes/${recipe?.id}/rate`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ value }),
-      });
-      setRating(value);
-    } catch (e) { console.error(e); }
-  };
-
-  const handleComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      alert('Please login to comment');
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/api/recipes/${recipe?.id}/comments`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: newComment }),
-      });
-      const comment = await res.json();
-      setComments([comment, ...comments]);
-      setNewComment('');
-    } catch (e) { console.error(e); }
-  };
-
-  // Computed values
   const scaleFactor = servings / (recipe?.yield || 1);
   
   const scaledIngredients = useMemo(() => {
@@ -159,7 +72,6 @@ export default function RecipePage() {
       let displayQty: string;
       
       if (unitSystem === 'metric') {
-        // Show metric
         if (ing.unit === 'g' && scaled >= 1000) {
           displayQty = `${(scaled/1000).toFixed(2)}kg`;
         } else if (ing.unit === 'ml' && scaled >= 1000) {
@@ -172,7 +84,6 @@ export default function RecipePage() {
           displayQty = `${scaled.toFixed(1)} ${ing.unit || ''}`;
         }
       } else {
-        // Convert to US
         if (ing.unit === 'g') {
           if (scaled >= 453) {
             displayQty = `${(scaled/453.6).toFixed(1)}lb`;
@@ -196,101 +107,66 @@ export default function RecipePage() {
     });
   }, [recipe?.ingredients, scaleFactor, unitSystem]);
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
-  if (!recipe) return <div className="p-8 text-center">Recipe not found</div>;
+  if (!recipe) return <div className="p-8 text-center text-white">Recipe not found</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-primary-400">Home</Link>
         <span className="mx-2">›</span>
-        <Link href={`/cuisine/${recipe.cuisine.slug}`} className="hover:text-primary-400">{recipe.cuisine.name}</Link>
+        <Link href={`/cuisine/${recipe.cuisine?.slug}`} className="hover:text-primary-400">{recipe.cuisine?.name}</Link>
         <span className="mx-2">›</span>
         <span className="text-gray-300">{recipe.title}</span>
       </nav>
 
-      {/* Title - changes when Michelin mode is on */}
       <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
-        {recipe.title} 
+        {recipe.title}
         {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
       </h1>
       
-      {/* Description */}
       <p className="text-gray-400 mb-4">{recipe.description}</p>
 
-      {/* Times & Save */}
       <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <span className="bg-gray-900 px-4 py-2 rounded-lg">⏱️ Prep: {recipe.prepTime} min</span>
         <span className="bg-gray-900 px-4 py-2 rounded-lg">🍳 Cook: {recipe.cookTime} min</span>
         <span className="bg-gray-900 px-4 py-2 rounded-lg">⏰ Total: {recipe.totalTime} min</span>
-        <button
-          onClick={handleSave}
-          className={`px-4 py-2 rounded-lg ${saved ? 'bg-green-600 text-white' : 'bg-gray-900 hover:bg-gray-800'}`}
-        >
-          {saved ? '✓ Saved' : '♡ Save'}
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="bg-gray-900 px-4 py-2 rounded-lg hover:bg-gray-800"
-        >
-          🖨️ Print
-        </button>
       </div>
 
-      {/* Rating */}
-      <div className="mb-6">
-        <span className="text-sm text-gray-500 mr-2">Rate this recipe:</span>
-        {[1,2,3,4,5].map(v => (
-          <button key={v} onClick={() => handleRate(v)} className="text-2xl mr-1">
-            {v <= rating ? '⭐' : '☆'}
-          </button>
-        ))}
-      </div>
-
-      {/* Controls */}
       <div className="bg-gray-900 rounded-xl p-6 mb-8">
         <div className="flex flex-wrap gap-6 items-center">
           <div className="flex items-center gap-4">
-            <span className="font-medium">Servings:</span>
-            <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full">−</button>
-            <span className="font-semibold">{servings}</span>
-            <button onClick={() => setServings(servings + 1)} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full">+</button>
+            <span className="font-medium text-white">Servings:</span>
+            <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full text-white">−</button>
+            <span className="font-semibold text-white">{servings}</span>
+            <button onClick={() => setServings(servings + 1)} className="w-8 h-8 bg-gray-800 border border-gray-700 rounded-full text-white">+</button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Units:</span>
-            <button onClick={() => setUnitSystem('us')} className={`px-3 py-1 rounded ${unitSystem === 'us' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700'}`}>US</button>
-            <button onClick={() => setUnitSystem('metric')} className={`px-3 py-1 rounded ${unitSystem === 'metric' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700'}`}>Metric</button>
+            <span className="text-sm text-gray-500 text-white">Units:</span>
+            <button onClick={() => setUnitSystem('us')} className={`px-3 py-1 rounded ${unitSystem === 'us' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700 text-white'}`}>US</button>
+            <button onClick={() => setUnitSystem('metric')} className={`px-3 py-1 rounded ${unitSystem === 'metric' ? 'bg-primary-600 text-white' : 'bg-gray-800 border border-gray-700 text-white'}`}>Metric</button>
           </div>
           <button
             onClick={() => setMichelinMode(!michelinMode)}
-            className={`px-4 py-2 rounded-lg border ${michelinMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-800 border-gray-700'}`}
+            className={`px-4 py-2 rounded-lg border ${michelinMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-800 border-gray-700 text-white'}`}
           >
             👨‍🍳 Michelin Mode
           </button>
         </div>
       </div>
 
-      {/* Ingredients */}
       <section className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">Ingredients</h2>
         <ul className="space-y-2">
           {scaledIngredients.map((ing, i) => (
-            <li key={i} className="flex justify-between py-2 border-b border-gray-800">
+            <li key={i} className="flex justify-between py-2 border-b border-gray-800 text-gray-300">
               <span>{ing}</span>
             </li>
           ))}
-          {scaledIngredients.length === 0 && <li className="text-gray-500">No ingredients</li>}
         </ul>
       </section>
 
-      {/* Ad placeholder */}
-      <div className="my-8 bg-gray-900 py-4 flex items-center justify-center">
-        <ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="ca-pub-1794557219157944" data-ad-slot="YOUR_AD_SLOT_ID" data-ad-format="auto"></ins>
-      </div>
-
-      {/* Instructions */}
       <section className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4">Instructions</h2>
         <ol className="space-y-6">
@@ -310,84 +186,7 @@ export default function RecipePage() {
               </div>
             </li>
           ))}
-          {(!recipe.steps || recipe.steps.length === 0) && <li className="text-gray-500">No instructions</li>}
         </ol>
-      </section>
-
-      {/* Pro Tips */}
-      {recipe.proTips && (
-        <section className="mb-8 p-4 bg-blue-900/30 border border-blue-700 rounded-lg">
-          <h3 className="font-semibold text-blue-400 mb-2">💡 Pro Tips</h3>
-          <p className="text-blue-300">{recipe.proTips}</p>
-        </section>
-      )}
-
-      {/* Storage */}
-      {recipe.storageInfo && (
-        <section className="mb-8 p-4 bg-gray-900 rounded-lg">
-          <h3 className="font-semibold text-gray-300 mb-2">📦 Storage & Reheating</h3>
-          <p className="text-gray-400">{recipe.storageInfo}</p>
-        </section>
-      )}
-
-      {/* Nutrition */}
-      {recipe.nutrition && (
-        <section className="mb-8">
-          <h3 className="font-semibold text-gray-300 mb-3">Nutrition per serving</h3>
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div className="bg-gray-900 rounded-lg p-3">
-              <div className="text-2xl font-bold text-white">{recipe.nutrition.calories}</div>
-              <div className="text-xs text-gray-500">Calories</div>
-            </div>
-            <div className="bg-gray-900 rounded-lg p-3">
-              <div className="text-2xl font-bold text-white">{recipe.nutrition.protein}g</div>
-              <div className="text-xs text-gray-500">Protein</div>
-            </div>
-            <div className="bg-gray-900 rounded-lg p-3">
-              <div className="text-2xl font-bold text-white">{recipe.nutrition.carbs}g</div>
-              <div className="text-xs text-gray-500">Carbs</div>
-            </div>
-            <div className="bg-gray-900 rounded-lg p-3">
-              <div className="text-2xl font-bold text-white">{recipe.nutrition.fat}g</div>
-              <div className="text-xs text-gray-500">Fat</div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Comments Section */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-4">Comments ({comments.length})</h2>
-        
-        {/* Add Comment */}
-        {user ? (
-          <form onSubmit={handleComment} className="mb-6">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg mb-2 text-white"
-              rows={3}
-              required
-            />
-            <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg">
-              Post Comment
-            </button>
-          </form>
-        ) : (
-          <p className="mb-4 text-gray-500"><Link href="/login" className="text-primary-400">Login</Link> to post a comment</p>
-        )}
-
-        {/* Comments List */}
-        <div className="space-y-4">
-          {comments.map(comment => (
-            <div key={comment.id} className="p-4 bg-gray-900 rounded-lg">
-              <div className="font-medium text-white">{comment.user?.username || 'Anonymous'}</div>
-              <p className="text-gray-400">{comment.content}</p>
-            </div>
-          ))}
-          {comments.length === 0 && <p className="text-gray-500">No comments yet. Be the first!</p>}
-        </div>
       </section>
     </div>
   );

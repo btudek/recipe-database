@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { searchRecipes } from '@/lib/supabase';
 
 interface Recipe {
   id: string;
@@ -13,7 +12,6 @@ interface Recipe {
   description: string;
   prepTime: number;
   cookTime: number;
-  imageUrl: string | null;
   cuisine: { name: string; slug: string };
 }
 
@@ -33,9 +31,8 @@ function SearchContent() {
       
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        setRecipes(data);
+        const data = await searchRecipes(query);
+        setRecipes(data || []);
       } catch (error) {
         console.error('Search failed:', error);
       } finally {
@@ -52,7 +49,6 @@ function SearchContent() {
         {query ? `Search results for "${query}"` : 'Search Recipes'}
       </h1>
 
-      {/* Search Form */}
       <form action="/search" method="GET" className="mb-8">
         <div className="flex gap-2">
           <input
@@ -62,16 +58,12 @@ function SearchContent() {
             placeholder="Search recipes, ingredients, cuisines..."
             className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
-          <button
-            type="submit"
-            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
+          <button type="submit" className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
             Search
           </button>
         </div>
       </form>
 
-      {/* Results */}
       {loading ? (
         <p className="text-gray-400">Searching...</p>
       ) : recipes.length === 0 && query ? (
@@ -82,18 +74,14 @@ function SearchContent() {
             <Link 
               key={recipe.id} 
               href={`/recipe/${recipe.slug}`}
-              className="flex gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-primary-600 transition-colors"
+              className="flex gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-primary-600"
             >
               <div className="w-32 h-24 bg-gray-800 rounded flex items-center justify-center flex-shrink-0">
-                {recipe.imageUrl ? (
-                  <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover rounded" />
-                ) : (
-                  <span className="text-3xl">🍽️</span>
-                )}
+                <span className="text-3xl">🍽️</span>
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-white">{recipe.title}</h3>
-                <p className="text-gray-400 text-sm line-clamp-2">{recipe.description}</p>
+                <p className="text-gray-400 text-sm">{recipe.description}</p>
                 <div className="flex gap-4 mt-2 text-sm text-gray-500">
                   <span>⏱️ {recipe.prepTime + recipe.cookTime} min</span>
                   <span>{recipe.cuisine?.name}</span>
