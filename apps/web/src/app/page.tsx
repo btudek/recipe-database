@@ -25,16 +25,12 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [recipesRes, cuisinesRes] = await Promise.all([
-          fetch(`${API_URL}/api/recipes`),
-          fetch(`${API_URL}/api/cuisines`),
-        ]);
-        
-        const recipesData = await recipesRes.json();
-        const cuisinesData = await cuisinesRes.json();
-        
+        console.log('Fetching from:', `${API_URL}/api/recipes`);
+        const res = await fetch(`${API_URL}/api/recipes`);
+        console.log('Response:', res.status);
+        const recipesData = await res.json();
+        console.log('Recipes:', recipesData);
         setRecipes(recipesData.slice(0, 6));
-        setCuisines(cuisinesData);
       } catch (error) {
         console.error('Failed to fetch:', error);
       } finally {

@@ -51,19 +51,31 @@ export default function RecipePage() {
   const [rating, setRating] = useState(0);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    console.log('Fetching recipe:', params.slug);
+    console.log('API URL:', API_URL);
+    
     const storedUser = localStorage.getItem('user');
     if (storedUser) setUser(JSON.parse(storedUser));
     
     fetch(`${API_URL}/api/recipes/${params.slug}`)
-      .then(res => res.json())
+      .then(res => {
+        console.log('Response status:', res.status);
+        return res.json();
+      })
       .then(data => {
+        console.log('Recipe data:', data);
         setRecipe(data);
         setServings(data.yield);
         fetchComments(data.id);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error('Fetch error:', err);
+        setError(err.message);
+        setLoading(false);
+      });
   }, [params.slug]);
 
   const fetchComments = async (recipeId: string) => {
@@ -131,6 +143,7 @@ export default function RecipePage() {
   };
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!recipe) return <div className="p-8 text-center">Recipe not found</div>;
 
   const scaleFactor = servings / recipe.yield;
