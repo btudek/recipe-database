@@ -65,13 +65,15 @@ export default function RecipePage() {
         console.log('Response status:', res.status);
         return res.json();
       })
-  console.log('Recipe data:', data);
-  setRecipe(data);
-  setServings(data?.yield || 4);
-  setLoading(false);
-  if (data?.id) {
-    fetchComments(data.id);
-  }
+      .then(data => {
+        console.log('Recipe data:', data);
+        setRecipe(data);
+        setServings(data?.yield || 4);
+        setLoading(false);
+        if (data?.id) {
+          fetchComments(data.id);
+        }
+      })
       .catch(err => {
         console.error('Fetch error:', err);
         setError(err.message);
