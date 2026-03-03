@@ -2,21 +2,21 @@ const { Client } = require('pg');
 const client = new Client({ host: 'db.ycwbumsmlikiquplkdln.supabase.co', port: 5432, database: 'postgres', user: 'postgres', password: process.env.DBPASS });
 
 const recipes = [
-  { title: 'American Buffalo Wings', slug: 'buffalo-wings-2', description: 'Crispy wings', cuisine_id: '813587ed-24eb-421d-97be-f5f2d1740e86' },
-  { title: 'American Meatloaf', slug: 'meatloaf-2', description: 'Classic meatloaf', cuisine_id: '813587ed-24eb-421d-97be-f5f2d1740e86' },
+  { title: 'Japanese Okonomiyaki', slug: 'okonomiyaki-2', description: 'Savory pancake', cuisine_id: 'a3cb4471-db63-434e-a2e2-255242ffaca0' },
+  { title: 'Japanese Takoyaki', slug: 'takoyaki', description: 'Octopus balls', cuisine_id: 'a3cb4471-db63-434e-a2e2-255242ffaca0' },
 ];
 
 const RECIPES = {
-  'buffalo-wings-2': {
+  'okonomiyaki-2': {
     ingredients: [
-      { name: 'Chicken wings', quantity: 1000, unit: 'g' },
-      { name: 'Hot sauce', quantity: 120, unit: 'ml' },
-      { name: 'Butter', quantity: 60, unit: 'g' },
+      { name: 'Cabbage', quantity: 200, unit: 'g' },
+      { name: 'Eggs', quantity: 2, unit: 'pcs' },
+      { name: 'Flour', quantity: 100, unit: 'g' },
     ],
     steps: [
-      { stepNumber: 1, instruction: 'Fry or bake wings.', michelinNote: 'The cooking.' },
-      { stepNumber: 2, instruction: 'Toss in buffalo sauce.', michelinNote: 'The sauce.' },
-      { stepNumber: 3, instruction: 'Serve with blue cheese.', michelinNote: 'The finish.' },
+      { stepNumber: 1, instruction: 'Mix cabbage, egg and flour.', michelinNote: 'The batter.' },
+      { stepNumber: 2, instruction: 'Cook like a pancake.', michelinNote: 'The cooking.' },
+      { stepNumber: 3, instruction: 'Top with sauce and mayo.', michelinNote: 'The finish.' },
     ]
   },
 };

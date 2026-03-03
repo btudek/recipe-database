@@ -2,21 +2,21 @@ const { Client } = require('pg');
 const client = new Client({ host: 'db.ycwbumsmlikiquplkdln.supabase.co', port: 5432, database: 'postgres', user: 'postgres', password: process.env.DBPASS });
 
 const recipes = [
-  { title: 'American Buffalo Wings', slug: 'buffalo-wings-2', description: 'Crispy wings', cuisine_id: '813587ed-24eb-421d-97be-f5f2d1740e86' },
-  { title: 'American Meatloaf', slug: 'meatloaf-2', description: 'Classic meatloaf', cuisine_id: '813587ed-24eb-421d-97be-f5f2d1740e86' },
+  { title: 'Thai Massaman Curry', slug: 'massaman-curry-2', description: 'Thai Muslim curry', cuisine_id: 'a3cb4471-db63-434e-a2e2-255242ffaca0' },
+  { title: 'Thai Khao Soi', slug: 'khao-soi-2', description: 'Northern Thai curry', cuisine_id: 'a3cb4471-db63-434e-a2e2-255242ffaca0' },
 ];
 
 const RECIPES = {
-  'buffalo-wings-2': {
+  'massaman-curry-2': {
     ingredients: [
-      { name: 'Chicken wings', quantity: 1000, unit: 'g' },
-      { name: 'Hot sauce', quantity: 120, unit: 'ml' },
-      { name: 'Butter', quantity: 60, unit: 'g' },
+      { name: 'Chicken', quantity: 400, unit: 'g' },
+      { name: 'Massaman curry paste', quantity: 60, unit: 'g' },
+      { name: 'Coconut milk', quantity: 400, unit: 'ml' },
     ],
     steps: [
-      { stepNumber: 1, instruction: 'Fry or bake wings.', michelinNote: 'The cooking.' },
-      { stepNumber: 2, instruction: 'Toss in buffalo sauce.', michelinNote: 'The sauce.' },
-      { stepNumber: 3, instruction: 'Serve with blue cheese.', michelinNote: 'The finish.' },
+      { stepNumber: 1, instruction: 'Fry curry paste.', michelinNote: 'The base.' },
+      { stepNumber: 2, instruction: 'Add chicken and coconut milk.', michelinNote: 'The cooking.' },
+      { stepNumber: 3, instruction: 'Simmer with potatoes.', michelinNote: 'The finish.' },
     ]
   },
 };
