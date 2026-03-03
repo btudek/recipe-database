@@ -1,66 +1,76 @@
 const { Client } = require('pg');
-
-const client = new Client({
-  host: 'db.ycwbumsmlikiquplkdln.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: process.env.DBPASS
+const client = new Client({ 
+  host: 'db.ycwbumsmlikiquplkdln.supabase.co', 
+  port: 5432, 
+  database: 'postgres', 
+  user: 'postgres', 
+  password: 'HailMaryFullOfGrace1$' 
 });
 
-const MORE_RECIPES = [
-  { slug: 'butter-chicken', title: 'Butter Chicken', description: 'Creamy Indian curry with tender chicken in tomato sauce', prep: 20, cook: 30, total: 50, yield: 4, cuisine: 'indian', cat: 'dinner', img: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800' },
-  { slug: 'beef-tacos', title: 'Beef Tacos', description: 'Seasoned ground beef in crispy taco shells', prep: 15, cook: 15, total: 30, yield: 6, cuisine: 'mexican', cat: 'dinner', img: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800' },
-  { slug: 'salmon-sushi', title: 'Salmon Sushi', description: 'Fresh salmon over seasoned sushi rice', prep: 40, cook: 10, total: 50, yield: 4, cuisine: 'japanese', cat: 'dinner', img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800' },
-  { slug: 'french-onion-soup', title: 'French Onion Soup', description: 'Caramelized onion soup with melted cheese', prep: 15, cook: 45, total: 60, yield: 4, cuisine: 'french', cat: 'dinner', img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
-  { slug: 'kung-pao-chicken', title: 'Kung Pao Chicken', description: 'Spicy Sichuan stir-fry with peanuts', prep: 15, cook: 10, total: 25, yield: 3, cuisine: 'chinese', cat: 'dinner', img: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800' },
-  { slug: 'pizza-margherita', title: 'Classic Margherita Pizza', description: 'Simple Italian pizza with fresh basil', prep: 30, cook: 15, total: 45, yield: 4, cuisine: 'italian', cat: 'dinner', img: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800' },
-  { slug: 'ramen-noodles', title: 'Tonkotsu Ramen', description: 'Rich pork bone broth with noodles', prep: 20, cook: 180, total: 200, yield: 4, cuisine: 'japanese', cat: 'dinner', img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
-  { slug: 'guacamole', title: 'Fresh Guacamole', description: 'Creamy avocado dip with lime and cilantro', prep: 10, cook: 0, total: 10, yield: 6, cuisine: 'mexican', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800' },
-  { slug: 'croissant', title: 'Butter Croissants', description: 'Flaky French pastries', prep: 60, cook: 20, total: 180, yield: 12, cuisine: 'french', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800' },
-  { slug: 'fried-rice', title: 'Yangzhou Fried Rice', description: 'Chinese fried rice with egg and vegetables', prep: 10, cook: 10, total: 20, yield: 2, cuisine: 'chinese', cat: 'dinner', img: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
-  { slug: 'tiramisu', title: 'Classic Tiramisu', description: 'Italian coffee-flavored layered dessert', prep: 30, cook: 0, total: 30, yield: 8, cuisine: 'italian', cat: 'desserts', img: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800' },
-  { slug: 'churros', title: 'Spanish Churros', description: 'Fried dough with chocolate sauce', prep: 15, cook: 15, total: 30, yield: 6, cuisine: 'mexican', cat: 'desserts', img: 'https://images.unsplash.com/photo-1624371414361-e670edf4898d?w=800' },
-  { slug: 'miso-soup', title: 'Traditional Miso Soup', description: 'Japanese soup with tofu and seaweed', prep: 5, cook: 10, total: 15, yield: 4, cuisine: 'japanese', cat: 'soups', img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
-  { slug: 'caesar-salad', title: 'Caesar Salad', description: 'Crisp romaine with creamy dressing', prep: 15, cook: 0, total: 15, yield: 4, cuisine: 'italian', cat: 'salads', img: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800' },
-  { slug: 'panna-cotta', title: 'Vanilla Panna Cotta', description: 'Italian cream dessert', prep: 10, cook: 5, total: 240, yield: 6, cuisine: 'italian', cat: 'desserts', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800' },
-  { slug: 'beef-stir-fry', title: 'Ginger Beef Stir Fry', description: 'Quick beef with vegetables in savory sauce', prep: 15, cook: 10, total: 25, yield: 4, cuisine: 'chinese', cat: 'dinner', img: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
-  { slug: 'enchiladas', title: 'Chicken Enchiladas', description: 'Rolled tortillas with chicken and cheese', prep: 20, cook: 25, total: 45, yield: 6, cuisine: 'mexican', cat: 'dinner', img: 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?w=800' },
-  { slug: 'mushroom-risotto', title: 'Mushroom Risotto', description: 'Creamy Italian rice with wild mushrooms', prep: 10, cook: 30, total: 40, yield: 4, cuisine: 'italian', cat: 'dinner', img: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800' },
-  { slug: 'tom-yum-soup', title: 'Tom Yum Soup', description: 'Thai hot and sour soup', prep: 15, cook: 20, total: 35, yield: 4, cuisine: 'chinese', cat: 'soups', img: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=800' },
-  { slug: 'creme-brulee', title: 'Classic Creme Brulee', description: 'Vanilla custard with caramelized sugar', prep: 15, cook: 40, total: 180, yield: 6, cuisine: 'french', cat: 'desserts', img: 'https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=800' },
+const recipes = [
+  { name: 'Tiramisu Classic', cuisine: 'f51d9e26-ace3-4b36-9d0c-6364877d3d94', ingredients: ['500g mascarpone cheese', '4 eggs separated', '100g sugar', '200ml espresso cooled', '200g ladyfinger cookies', '2 tbsp cocoa powder', '1 tsp vanilla extract'], steps: ['Beat egg yolks with sugar until creamy', 'Add mascarpone and vanilla', 'Whip egg whites to stiff peaks and fold in', 'Dip ladyfingers briefly in espresso', 'Layer cookies and cream mixture', 'Repeat layers, dust with cocoa', 'Refrigerate 4+ hours'] },
+  { name: 'Chicken Enchiladas Verdes', cuisine: '539d04d6-e193-4f0f-930a-90553fb21704', ingredients: ['500g shredded chicken', '8 flour tortillas', '200g shredded cheese', '1 cup enchilada sauce', '1 onion diced', '2 cloves garlic', '1 tsp cumin', 'Sour cream for serving'], steps: ['Saute onion and garlic', 'Mix chicken with cumin and half the cheese', 'Fill tortillas with chicken mixture', 'Roll and place in baking dish', 'Pour enchilada sauce over', 'Top with remaining cheese', 'Bake 20 min at 375F'] },
+  { name: 'Tonkotsu Ramen Authentic', cuisine: 'a3cb4471-db63-434e-a2e2-255242ffaca0', ingredients: ['500g pork bones', '300g pork belly', '400g ramen noodles', '4 cups pork broth', '2 soft boiled eggs', 'Green onions', 'Nori sheets', 'Soy sauce', 'Garlic', 'Ginger'], steps: ['Boil pork bones 8+ hours for broth', 'Marinate pork belly in soy sauce', 'Braise pork belly until tender', 'Prepare soft boiled eggs', 'Cook ramen noodles', 'Assemble bowl with broth, noodles, pork', 'Top with egg, nori, green onions'] },
+  { name: 'Coq au Vin Rouge', cuisine: '2f76ffd5-3152-4ed6-bb2a-5d4b1c09b07b', ingredients: ['1 whole chicken cut', '200g bacon', '1 bottle red wine', '200g mushrooms', '12 pearl onions', '2 carrots', '3 cloves garlic', 'Thyme', 'Bay leaves', 'Chicken stock'], steps: ['Marinate chicken in wine overnight', 'Brown bacon and remove', 'Brown chicken pieces', 'Saute vegetables', 'Add wine, stock, herbs', 'Simmer 1.5 hours', 'Add bacon back, serve'] },
+  { name: 'Kung Pao Chicken Spicy', cuisine: '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28', ingredients: ['500g chicken breast', '100g peanuts', '4 dried chilies', 'Bell pepper', 'Zucchini', '3 tbsp soy sauce', '2 tbsp vinegar', '1 tbsp sugar', 'Garlic', 'Ginger'], steps: ['Cube chicken and marinate', 'Make sauce with soy, vinegar, sugar', 'Stir fry peanuts until golden', 'Stir fry chilies and vegetables', 'Add chicken and cook', 'Pour sauce, toss to coat', 'Add peanuts, serve'] },
+  { name: 'Butter Chicken Curry', cuisine: 'fec72a8d-e056-400b-8370-f915b936317a', ingredients: ['600g chicken thighs', '200g yogurt', '100g butter', '1 cup tomato puree', '100ml heavy cream', 'Garam masala', 'Garlic', 'Ginger', 'Kashmiri chili', 'Fenugreek'], steps: ['Marinate chicken in yogurt spices', 'Grill or pan-fry chicken', 'Saute garlic ginger', 'Add tomato puree and spices', 'Simmer 20 minutes', 'Add butter and cream', 'Add chicken, simmer 10 min'] },
+  { name: 'BBQ Pulled Pork Southern', cuisine: '813587ed-24eb-421d-97be-f5f2d1740e86', ingredients: ['2kg pork shoulder', 'BBQ spice rub', '500ml BBQ sauce', '250ml apple cider vinegar', 'Burger buns', 'Coleslaw mix'], steps: ['Apply dry rub to pork overnight', 'Slow cook pork 8 hours at 225F', 'Shred with forks', 'Mix with BBQ sauce and vinegar', 'Toast buns', 'Pile pork on buns', 'Top with coleslaw'] },
+  { name: 'Shrimp Scampi Pasta', cuisine: 'f51d9e26-ace3-4b36-9d0c-6364877d3d94', ingredients: ['500g large shrimp', '400g linguine', '100g butter', '6 cloves garlic', '1/2 cup white wine', 'Lemon juice', 'Parsley', 'Red pepper flakes'], steps: ['Cook pasta al dente', 'Saute garlic in butter', 'Add shrimp, cook pink', 'Add wine and lemon', 'Toss with pasta', 'Add parsley and pepper', 'Serve immediately'] },
+  { name: 'Fish Tacos Baja', cuisine: '539d04d6-e193-4f0f-930a-90553fb21704', ingredients: ['500g white fish', '8 corn tortillas', 'Cabbage slaw', 'Pickled onions', 'Cilantro', 'Lime', 'Chipotle mayo', 'Cumin', 'Chili powder'], steps: ['Season fish with cumin and chili', 'Grill or pan-sear fish', 'Warm tortillas', 'Make chipotle mayo', 'Assemble with slaw', 'Add pickled onions', 'Squeeze lime, serve'] },
+  { name: 'Miso Soup Traditional', cuisine: 'a3cb4471-db63-434e-a2e2-255242ffaca0', ingredients: ['4 cups dashi', '3 tbsp miso paste', '100g tofu', '2 sheets nori', 'Green onions', 'Wakame seaweed'], steps: ['Prepare dashi stock', 'Soft boil tofu cubes', 'Rehydrate wakame', 'Dissolve miso in warm dashi', 'Add tofu and wakame', 'Serve in bowls', 'Top with nori and green onions'] },
+  { name: 'Beef Bourguignon French', cuisine: '2f76ffd5-3152-4ed6-bb2a-5d4b1c09b07b', ingredients: ['1kg beef chuck', '200g bacon', '1 bottle red wine', '250g pearl onions', '300g carrots', '400g mushrooms', '3 cloves garlic', 'Tomato paste', 'Beef stock'], steps: ['Brown beef chunks, set aside', 'Brown bacon and vegetables', 'Add tomato paste and garlic', 'Pour in wine and stock', 'Return beef, simmer 3 hours', 'Add mushrooms near end', 'Serve with crusty bread'] },
+  { name: 'Mapo Tofu Spicy', cuisine: '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28', ingredients: ['400g silken tofu', '300g ground pork', '2 tbsp doubanjiang', '1 tbsp douchi', 'Sichuan peppercorns', 'Garlic', 'Ginger', 'Green onions', 'Sesame oil'], steps: ['Cube tofu, blanch briefly', 'Brown pork with ginger', 'Add doubanjiang and douchi', 'Add stock and tofu', 'Season with peppercorns', 'Thicken with starch', 'Finish with sesame oil'] },
+  { name: 'Palak Paneer Indian', cuisine: 'fec72a8d-e056-400b-8370-f915b936317a', ingredients: ['400g paneer', '500g spinach', '2 onions', '3 tomatoes', 'Ginger', 'Garlic', 'Garam masala', 'Cream', 'Ghee'], steps: ['Blanch and puree spinach', 'Saute onion tomato paste', 'Add ginger garlic', 'Add spinach puree', 'Simmer 15 minutes', 'Add paneer cubes', 'Finish with cream and ghee'] },
+  { name: 'Meatloaf Classic', cuisine: '813587ed-24eb-421d-97be-f5f2d1740e86', ingredients: ['500g ground beef', '200g pork sausage', '2 eggs', '1 cup breadcrumbs', '1 onion', 'Ketchup', 'Worcestershire', 'Brown sugar', 'Mustard'], steps: ['Mix meats with eggs, breadcrumbs', 'Saute onion, add to mixture', 'Form loaf shape', 'Mix ketchup, sugar, mustard for glaze', 'Spread glaze on top', 'Bake 1 hour at 350F', 'Rest 10 min before slicing'] },
+  { name: 'Risotto Milanese Saffron', cuisine: 'f51d9e26-ace3-4b36-9d0c-6364877d3d94', ingredients: ['400g arborio rice', '1L chicken stock', '100g parmesan', '100g butter', 'Saffron threads', '1 onion', 'White wine', 'Beef stock'], steps: ['Heat stock with saffron', 'Saute onion in butter', 'Toast rice 2 min', 'Add wine, let absorb', 'Add stock ladle by ladle', 'Stir constantly 18 min', 'Finish with parmesan'] },
+  { name: 'Chile Rellenos Poblando', cuisine: '539d04d6-e193-4f0f-930a-90553fb21704', ingredients: ['6 poblano peppers', '200g queso Oaxaca', '4 eggs separated', 'Flour', 'Tomatillo salsa', 'Sour cream', 'Cilantro'], steps: ['Roast and peel poblanos', 'Make slit, stuff with cheese', 'Beat egg whites to stiff peaks', 'Mix yolks with flour', 'Coat peppers with flour, then egg', 'Fry until golden', 'Serve with salsa'] },
+  { name: 'Yakitori Chicken', cuisine: 'a3cb4471-db63-434e-a2e2-255242ffaca0', ingredients: ['500g chicken thighs', '200g chicken liver', 'Bamboo skewers', 'Soy sauce', 'Mirin', 'Sake', 'Sugar', 'Green onions'], steps: ['Cut chicken into bite pieces', 'Soak skewers overnight', 'Make yakitori sauce', 'Thread chicken and liver', 'Grill, basting with sauce', 'Char slightly', 'Serve with green onions'] },
+  { name: 'Ratatouille Provencal', cuisine: '2f76ffd5-3152-4ed6-bb2a-5d4b1c09b07b', ingredients: ['2 zucchini', '2 eggplants', '4 tomatoes', '2 bell peppers', '1 onion', '4 cloves garlic', 'Herbs de Provence', 'Olive oil', 'Thyme'], steps: ['Slice vegetables thinly', 'Make tomato sauce base', 'Layer vegetables in dish', 'Drizzle with olive oil', 'Season with herbs', 'Bake 45 min at 375F', 'Serve warm'] },
+  { name: 'Sweet and Sour Pork Chinese', cuisine: '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28', ingredients: ['500g pork loin', 'Pineapple chunks', 'Bell peppers', '1 onion', 'Rice vinegar', 'Sugar', 'Soy sauce', 'Ketchup', 'Cornstarch'], steps: ['Cut pork, coat in cornstarch', 'Deep fry pork until golden', 'Make sweet and sour sauce', 'Stir fry vegetables', 'Add sauce and pineapple', 'Return pork', 'Serve with rice'] },
+  { name: 'Dal Makhani Punjabi', cuisine: 'fec72a8d-e056-400b-8370-f915b936317a', ingredients: ['300g black lentils', '100g kidney beans', '200g cream', '100g butter', 'Tomato puree', 'Ginger', 'Garlic', 'Garam masala', 'Kashmiri chili'], steps: ['Soak and pressure cook lentils', 'Saute ginger garlic', 'Add tomato and spices', 'Add cooked lentils', 'Simmer 30 minutes', 'Add cream and butter', 'Serve with naan'] },
+  { name: 'Cobb Salad American', cuisine: '813587ed-24eb-421d-97be-f5f2d1740e86', ingredients: ['Chicken breast', 'Bacon', 'Hard boiled eggs', 'Avocado', 'Blue cheese', 'Tomatoes', 'Romaine lettuce', 'Ranch dressing'], steps: ['Grill and slice chicken', 'Cook bacon until crispy', 'Halve eggs, dice avocado', 'Chop tomatoes', 'Arrange on greens', 'Drizzle with ranch', 'Serve immediately'] },
+  { name: 'Osso Buco Milanese', cuisine: 'f51d9e26-ace3-4b36-9d0c-6364877d3d94', ingredients: ['4 veal shanks', '1 cup white wine', '2 cups chicken stock', '2 carrots', '2 celery stalks', '1 onion', '4 cloves garlic', 'Tomato paste', 'Gremolata'], steps: ['Brown veal shanks, set aside', 'Saute vegetables', 'Add tomato paste', 'Pour wine and stock', 'Return veal, braise 2 hours', 'Make gremolata', 'Serve with risotto'] },
+  { name: 'Carnitas Mexican Style', cuisine: '539d04d6-e193-4f0f-930a-90553fb21704', ingredients: ['1.5kg pork shoulder', 'Oranges', 'Lime', 'Cumin', 'Oregano', 'Chipotle', 'Garlic', 'Bay leaves', 'Corn tortillas'], steps: ['Season pork with spices', 'Add oranges, lime, garlic', 'Pressure cook 45 min', 'Shred meat', 'Crispy in oven or pan', 'Serve on tortillas', 'With onion, cilantro, lime'] },
+  { name: 'Tempura Shrimp Vegetables', cuisine: 'a3cb4471-db63-434e-a2e2-255242ffaca0', ingredients: ['400g shrimp', '2 zucchinis', '2 sweet potatoes', '1 cup flour', '1 cup cornstarch', 'Ice cold water', 'Dashi', 'Soy sauce', 'Mirin'], steps: ['Make batter with ice water', 'Slice vegetables', 'Dip shrimp and veggies', 'Deep fry until golden', 'Make dipping sauce', 'Serve hot', 'With dipping sauce'] },
+  { name: 'Quiche Lorraine French', cuisine: '2f76ffd5-3152-4ed6-bb2a-5d4b1c09b07b', ingredients: ['1 pie crust', '200g bacon', '200g gruyere cheese', '4 eggs', '2 cups cream', '1 cup milk', 'Nutmeg', 'Thyme'], steps: ['Blind bake crust', 'Cook bacon until crispy', 'Layer bacon and cheese', 'Whisk eggs, cream, milk', 'Season with nutmeg', 'Pour into crust', 'Bake 35 min at 375F'] },
+  { name: 'General Tso Chicken Chinese', cuisine: '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28', ingredients: ['500g chicken thighs', 'Cornstarch', 'Dried chilies', 'Garlic', 'Ginger', 'Soy sauce', 'Rice vinegar', 'Sugar', 'Sesame oil'], steps: ['Cut chicken, coat in cornstarch', 'Deep fry until crispy', 'Make sauce', 'Saute chilies, garlic, ginger', 'Add sauce, thicken', 'Toss chicken', 'Serve with rice'] }
 ];
 
-async function main() {
+async function addRecipes() {
   await client.connect();
-  
-  // Get cuisine and category IDs
-  const cuisineResult = await client.query('SELECT name, id FROM cuisine');
-  const catResult = await client.query('SELECT name, id FROM category');
-  
-  const cuisineMap = {};
-  cuisineResult.rows.forEach(r => cuisineMap[r.name.toLowerCase()] = r.id);
-  
-  const catMap = {};
-  catResult.rows.forEach(r => catMap[r.name.toLowerCase()] = r.id);
-  
-  console.log('Cuisines:', cuisineMap);
-  console.log('Categories:', catMap);
-  
-  for (const r of MORE_RECIPES) {
-    await client.query(
-      `INSERT INTO recipe (slug, title, description, prep_time, cook_time, total_time, yield, cuisine_id, category_id, image_url, status, published_at) 
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'published',NOW()) 
-       ON CONFLICT (slug) DO NOTHING`,
-      [r.slug, r.title, r.description, r.prep, r.cook, r.total, r.yield, cuisineMap[r.cuisine], catMap[r.cat], r.img]
-    );
-    console.log('Added:', r.title);
+  let added = 0;
+  for (const r of recipes) {
+    const slug = r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    try {
+      const recipeResult = await client.query(
+        'INSERT INTO recipe (slug, title, cuisine_id, status, published_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+        [slug, r.name, r.cuisine, 'published']
+      );
+      const recipeId = recipeResult.rows[0].id;
+      
+      for (let i = 0; i < r.ingredients.length; i++) {
+        await client.query(
+          'INSERT INTO ingredient (recipe_id, name, order_index) VALUES ($1, $2, $3)',
+          [recipeId, r.ingredients[i], i]
+        );
+      }
+      for (let i = 0; i < r.steps.length; i++) {
+        await client.query(
+          'INSERT INTO recipe_step (recipe_id, step_number, instruction) VALUES ($1, $2, $3)',
+          [recipeId, i + 1, r.steps[i]]
+        );
+      }
+      console.log('Added:', r.name);
+      added++;
+    } catch (e) {
+      if (e.code === '23505') {
+        console.log('Skipped (exists):', r.name);
+      } else {
+        console.error('Error:', r.name, e.message);
+      }
+    }
   }
-  
-  const count = await client.query('SELECT COUNT(*) FROM recipe');
-  console.log('Total recipes:', count.rows[0].count);
-  
+  console.log('Total added:', added);
   await client.end();
 }
-
-main().catch(console.error);
+addRecipes().catch(e => { console.error(e); client.end(); });
