@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRecipes, getCuisines } from '@/lib/supabase';
+import { getRecipes, getCuisines, getRecipeScores } from '@/lib/supabase';
 
 interface Recipe {
   id: string;
@@ -14,6 +14,7 @@ interface Recipe {
   cookTime: number;
   imageUrl: string | null;
   cuisine: { name: string; slug: string };
+  healthScore?: number;
 }
 
 export default function HomePage() {
@@ -29,7 +30,17 @@ export default function HomePage() {
           getCuisines(),
         ]);
         
-        setRecipes((recipesData || []).slice(0, 6));
+        // Get health scores for recipes
+        const recipeIds = (recipesData || []).map((r: any) => r.id);
+        const scores = await getRecipeScores(recipeIds);
+        
+        // Attach scores to recipes
+        const recipesWithScores = (recipesData || []).map((r: any) => ({
+          ...r,
+          healthScore: scores[r.id] || null
+        }));
+        
+        setRecipes(recipesWithScores.slice(0, 6));
         setCuisines(cuisinesData || []);
       } catch (error) {
         console.error('Failed to fetch:', error);
@@ -131,6 +142,9 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         ) : (
           <span className="text-6xl">🍽️</span>
         )}
+        {recipe.healthScore !== undefined && recipe.healthScore !== null && (
+          <HealthScoreBadge score={recipe.healthScore} />
+        )}
       </div>
       <div className="p-4">
         <span className="text-sm text-primary-400 font-medium">{recipe.cuisine?.name}</span>
@@ -140,6 +154,34 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+function HealthScoreBadge({ score }: { score: number }) {
+  let colorClass = '';
+  let label = '';
+  
+  if (score >= 75) {
+    colorClass = 'bg-green-600';
+    label = 'Excellent';
+  } else if (score >= 50) {
+    colorClass = 'bg-yellow-500';
+    label = 'Good';
+  } else if (score >= 25) {
+    colorClass = 'bg-orange-500';
+    label = 'Fair';
+  } else {
+    colorClass = 'bg-red-600';
+    label = 'Poor';
+  }
+  
+  return (
+    <div 
+      className={`absolute top-2 right-2 ${colorClass} text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg`}
+      title={`Health Score: ${score}/100 (${label})`}
+    >
+      {score}
+    </div>
   );
 }
 

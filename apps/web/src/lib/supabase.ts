@@ -115,3 +115,23 @@ export async function searchRecipes(q: string) {
     imageUrl: getRecipePhoto(r.slug)
   }));
 }
+
+// Get health scores for multiple recipes
+export async function getRecipeScores(recipeIds: string[]) {
+  if (!recipeIds || recipeIds.length === 0) return {};
+  const idsParam = recipeIds.map(id => `id.eq.${id}`).join(',');
+  const data = await apiCall(`/recipe_score?or=(${idsParam})&select=recipe_id,general_score`);
+  const scoreMap: Record<string, number> = {};
+  (data || []).forEach((s: any) => {
+    scoreMap[s.recipe_id] = s.general_score;
+  });
+  return scoreMap;
+}
+
+// Get health score for a single recipe
+export async function getRecipeScore(recipeId: string): Promise<number | null> {
+  if (!recipeId) return null;
+  const data = await apiCall(`/recipe_score?recipe_id=eq.${recipeId}&select=general_score&limit=1`);
+  if (!data || data.length === 0) return null;
+  return data[0].general_score;
+}

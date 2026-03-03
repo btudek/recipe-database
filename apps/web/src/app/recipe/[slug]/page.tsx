@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRecipe } from '@/lib/supabase';
+import { getRecipe, getRecipeScore } from '@/lib/supabase';
 
 interface Ingredient {
   name: string;
@@ -36,6 +36,7 @@ interface Recipe {
   proTips?: string;
   storageInfo?: string;
   nutrition?: { calories: number; protein: number; carbs: number; fat: number };
+  healthScore?: number | null;
 }
 
 // Local storage helpers
@@ -121,6 +122,38 @@ function addComment(recipeId: string, comment: any) {
   localStorage.setItem('comments', JSON.stringify(allComments));
 }
 
+function HealthScoreDisplay({ score }: { score: number }) {
+  let colorClass = '';
+  let label = '';
+  let bgColor = '';
+  
+  if (score >= 75) {
+    colorClass = 'text-green-400';
+    bgColor = 'bg-green-900/30 border-green-700';
+    label = 'Excellent';
+  } else if (score >= 50) {
+    colorClass = 'text-yellow-400';
+    bgColor = 'bg-yellow-900/30 border-yellow-700';
+    label = 'Good';
+  } else if (score >= 25) {
+    colorClass = 'text-orange-400';
+    bgColor = 'bg-orange-900/30 border-orange-700';
+    label = 'Fair';
+  } else {
+    colorClass = 'text-red-400';
+    bgColor = 'bg-red-900/30 border-red-700';
+    label = 'Poor';
+  }
+  
+  return (
+    <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg border ${bgColor}`}>
+      <span className="text-gray-400 text-sm">Health Impact Score:</span>
+      <span className={`text-2xl font-bold ${colorClass}`}>{score}</span>
+      <span className={`text-sm ${colorClass}`}>({label})</span>
+    </div>
+  );
+}
+
 export default function RecipePage() {
   const params = useParams();
   const slug = params?.slug as string;
@@ -142,17 +175,28 @@ export default function RecipePage() {
     if (!slug) return;
     
     getRecipe(slug)
-      .then(data => {
-        setRecipe(data);
-        setServings(data?.yield || 4);
-        setIsFav(isFavorite(data?.id || ''));
-        setUserRating(getRatings()[data?.id || ''] || 0);
-        setComments(getComments()[data?.id || ''] || []);
+      .then(async (data) => {
+        if (!data) {
+          setLoading(false);
+          return null;
+        }
+        // Get health score for this recipe
+        const score = await getRecipeScore(data.id);
+        return { ...data, healthScore: score };
+      })
+      .then(dataWithScore => {
+        if (!dataWithScore) {
+          setLoading(false);
+          return;
+        }
+        setRecipe(dataWithScore);
+        setServings(dataWithScore.yield || 4);
+        setIsFav(isFavorite(dataWithScore.id));
+        setUserRating(getRatings()[dataWithScore.id] || 0);
+        setComments(getComments()[dataWithScore.id] || []);
         
         // Add to recently viewed
-        if (data) {
-          addToRecentlyViewed(data.id, data.title, data.slug);
-        }
+        addToRecentlyViewed(dataWithScore.id, dataWithScore.title, dataWithScore.slug);
         
         setLoading(false);
       })
@@ -325,6 +369,13 @@ export default function RecipePage() {
       </div>
       
       <p className="text-gray-400 mb-4">{recipe.description}</p>
+
+      {/* Health Score Badge */}
+      {recipe.healthScore !== undefined && recipe.healthScore !== null && (
+        <div className="mb-4">
+          <HealthScoreDisplay score={recipe.healthScore} />
+        </div>
+      )}
 
       {/* Rating */}
       <div className="flex items-center gap-4 mb-4">
