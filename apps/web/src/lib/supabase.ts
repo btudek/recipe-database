@@ -43,13 +43,52 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
     ...options.headers,
   };
   
-  const response = await fetch(url, { ...options, headers });
-  if (!response.ok) return [];
-  return response.json();
+  try {
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) return [];
+    const text = await response.text();
+    if (!text) return [];
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('API call failed:', error);
+    return [];
+  }
 }
 
-export async function getRecipes() {
-  const data = await apiCall('/recipe?select=*&status=eq.published&limit=20');
+export async function getRecipes(filters?: { cuisine?: string; category?: string; diet?: string }) {
+  let query = '/recipe?select=*&limit=100';
+  const params: string[] = [];
+  
+  if (filters?.cuisine) {
+    params.push(`cuisine_id=eq.${filters.cuisine}`);
+  }
+  if (filters?.category) {
+    params.push(`category_id=eq.${filters.category}`);
+  }
+  if (filters?.diet) {
+    params.push(`diet_id=eq.${filters.diet}`);
+  }
+  
+  if (params.length > 0) {
+    query += '&' + params.join('&');
+  }
+  
+  const data = await apiCall(query);
+  
+  // Get all cuisines, categories, and diets for lookup
+  const cuisines = await apiCall('/cuisine?select=*');
+  const categories = await apiCall('/category?select=*');
+  const diets = await apiCall('/diet?select=*');
+  
+  const cuisineMap: Record<string, any> = {};
+  (cuisines || []).forEach((c: any) => { cuisineMap[c.id] = c; });
+  
+  const categoryMap: Record<string, any> = {};
+  (categories || []).forEach((c: any) => { categoryMap[c.id] = c; });
+  
+  const dietMap: Record<string, any> = {};
+  (diets || []).forEach((d: any) => { dietMap[d.id] = d; });
+  
   return (data || []).map((r: any) => ({
     id: r.id,
     slug: r.slug,
@@ -60,13 +99,14 @@ export async function getRecipes() {
     totalTime: r.total_time || 0,
     yield: r.yield || 4,
     imageUrl: getRecipePhoto(r.slug),
-    cuisine: { name: 'Various', slug: 'various' },
-    category: { name: 'Dinner', slug: 'dinner' }
+    cuisine: r.cuisine_id ? { name: cuisineMap[r.cuisine_id]?.name || 'Unknown', slug: cuisineMap[r.cuisine_id]?.slug || 'unknown' } : { name: 'American', slug: 'american' },
+    category: r.category_id ? { name: categoryMap[r.category_id]?.name || 'Dinner', slug: categoryMap[r.category_id]?.slug || 'dinner' } : { name: 'Dinner', slug: 'dinner' },
+    diet: r.diet_id ? { id: r.diet_id, name: dietMap[r.diet_id]?.name || null } : null
   }));
 }
 
 export async function getRecipe(slug: string) {
-  const recipes = await apiCall(`/recipe?select=*&slug=eq.${slug}&status=eq.published&limit=1`);
+  const recipes = await apiCall(`/recipe?select=*&slug=eq.${slug}&limit=1`);
   if (!recipes || recipes.length === 0) return null;
   const r = recipes[0];
   
@@ -75,6 +115,33 @@ export async function getRecipe(slug: string) {
   
   // Get steps from database  
   const steps = await apiCall(`/recipe_step?recipe_id=eq.${r.id}&order=step_number`);
+  
+  // Get cuisine and category info
+  let cuisine = { name: 'American', slug: 'american' };
+  let category = { name: 'Dinner', slug: 'dinner' };
+  
+  if (r.cuisine_id) {
+    const cuisines = await apiCall(`/cuisine?id=eq.${r.cuisine_id}&limit=1`);
+    if (cuisines && cuisines.length > 0) {
+      cuisine = { name: cuisines[0].name, slug: cuisines[0].slug };
+    }
+  }
+  
+  if (r.category_id) {
+    const categories = await apiCall(`/category?id=eq.${r.category_id}&limit=1`);
+    if (categories && categories.length > 0) {
+      category = { name: categories[0].name, slug: categories[0].slug };
+    }
+  }
+  
+  // Get diet info
+  let diet = null;
+  if (r.diet_id) {
+    const diets = await apiCall(`/diet?id=eq.${r.diet_id}&limit=1`);
+    if (diets && diets.length > 0) {
+      diet = { id: diets[0].id, name: diets[0].name };
+    }
+  }
   
   return {
     id: r.id,
@@ -97,8 +164,9 @@ export async function getRecipe(slug: string) {
       instruction: s.instruction,
       michelinNote: s.michelin_note
     })),
-    cuisine: { name: 'Various', slug: 'various' },
-    category: { name: 'Dinner', slug: 'dinner' }
+    cuisine,
+    category,
+    diet
   };
 }
 
@@ -106,8 +174,16 @@ export async function getCuisines() {
   return apiCall('/cuisine?select=*&order=name');
 }
 
+export async function getCategories() {
+  return apiCall('/category?select=*&order=name');
+}
+
+export async function getDiets() {
+  return apiCall('/diet?select=*&order=name');
+}
+
 export async function searchRecipes(q: string) {
-  const data = await apiCall(`/recipe?select=*&status=eq.published&or=(title.ilike.*${q}*,description.ilike.*${q}*)&limit=20`);
+  const data = await apiCall(`/recipe?select=*&or=(title.ilike.*${q}*,description.ilike.*${q}*)&limit=20`);
   return (data || []).map((r: any) => ({
     ...r,
     prepTime: r.prep_time,
