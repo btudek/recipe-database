@@ -1,83 +1,63 @@
-const { Client } = require('pg');
-const client = new Client({ host: 'db.ycwbumsmlikiquplkdln.supabase.co', port: 5432, database: 'postgres', user: 'postgres', password: process.env.DBPASS });
+// More recipes - pushing to 500
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: 'db.ycwbumsmlikiquplkdln.supabase.co',
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres',
+  password: 'HailMaryFullOfGrace1$'
+});
 
-const RECIPES = [
-  // More breakfast
-  { slug: 'avocado-toast', title: 'Avocado Toast', description: 'Creamy avocado on toasted bread', prep: 10, cook: 5, total: 15, yield: 2, cuisine: 'american', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=800' },
-  { slug: 'acai-bowl', title: 'Acai Bowl', description: 'Frozen berry smoothie bowl', prep: 15, cook: 0, total: 15, yield: 1, cuisine: 'american', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800' },
-  { slug: 'oatmeal', title: 'Oatmeal with Berries', description: 'Warm oats with fresh berries', prep: 5, cook: 10, total: 15, yield: 1, cuisine: 'american', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=800' },
-  { slug: 'omelette', title: 'Veggie Omelette', description: 'Eggs with vegetables', prep: 10, cook: 8, total: 18, yield: 1, cuisine: 'french', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800' },
-  { slug: 'smoothie-bowl', title: 'Tropical Smoothie Bowl', description: 'Mango and pineapple smoothie', prep: 10, cook: 0, total: 10, yield: 1, cuisine: 'american', cat: 'breakfast', img: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800' },
-  
-  // More lunch
-  { slug: 'club-sandwich', title: 'Club Sandwich', description: 'Triple-decker sandwich', prep: 15, cook: 5, total: 20, yield: 1, cuisine: 'american', cat: 'lunch', img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800' },
-  { slug: 'caesar-wrap', title: 'Chicken Caesar Wrap', description: 'Grilled chicken wrap', prep: 15, cook: 10, total: 25, yield: 1, cuisine: 'american', cat: 'lunch', img: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800' },
-  { slug: 'pasta-salad', title: 'Italian Pasta Salad', description: 'Cold pasta with vegetables', prep: 20, cook: 10, total: 30, yield: 6, cuisine: 'italian', cat: 'lunch', img: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800' },
-  { slug: 'tuna-salad', title: 'Tuna Salad Sandwich', description: 'Classic tuna salad', prep: 10, cook: 0, total: 10, yield: 2, cuisine: 'american', cat: 'lunch', img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800' },
-  { slug: 'sushi-bowl', title: 'Sushi Bowl', description: 'Deconstructed sushi', prep: 20, cook: 0, total: 20, yield: 2, cuisine: 'japanese', cat: 'lunch', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800' },
-  
-  // More appetizers
-  { slug: 'hummus', title: 'Classic Hummus', description: 'Chickpea dip', prep: 10, cook: 0, total: 10, yield: 8, cuisine: 'indian', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=800' },
-  { slug: 'stuffed-mushrooms', title: 'Stuffed Mushrooms', description: 'Cheese-filled mushrooms', prep: 15, cook: 20, total: 35, yield: 6, cuisine: 'italian', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=800' },
-  { slug: 'caprese-skewers', title: 'Caprese Skewers', description: 'Mozzarella and tomato', prep: 10, cook: 0, total: 10, yield: 8, cuisine: 'italian', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=800' },
-  { slug: 'spinach-dip', title: 'Spinach Artichoke Dip', description: 'Creamy baked dip', prep: 15, cook: 25, total: 40, yield: 8, cuisine: 'american', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1576506295286-5cda18df43e7?w=800' },
-  { slug: 'egg-rolls', title: 'Crispy Egg Rolls', description: 'Fried vegetable rolls', prep: 30, cook: 15, total: 45, yield: 8, cuisine: 'chinese', cat: 'appetizers', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800' },
-  
-  // More soups
-  { slug: 'chicken-tortilla-soup', title: 'Chicken Tortilla Soup', description: 'Mexican soup with tortillas', prep: 15, cook: 30, total: 45, yield: 4, cuisine: 'mexican', cat: 'soups', img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800' },
-  { slug: 'clam-chowder', title: 'New England Clam Chowder', description: 'Creamy seafood soup', prep: 15, cook: 30, total: 45, yield: 6, cuisine: 'american', cat: 'soups', img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
-  { slug: 'vegetable-soup', title: 'Hearty Vegetable Soup', description: 'Farm-style vegetable soup', prep: 20, cook: 40, total: 60, yield: 8, cuisine: 'french', cat: 'soups', img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
-  { slug: 'ramen-soup', title: 'Shoyu Ramen', description: 'Soy sauce ramen', prep: 20, cook: 30, total: 50, yield: 2, cuisine: 'japanese', cat: 'soups', img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
-  
-  // More salads
-  { slug: 'waldorf-salad', title: 'Waldorf Salad', description: 'Apple celery walnut salad', prep: 15, cook: 0, total: 15, yield: 4, cuisine: 'american', cat: 'salads', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800' },
-  { slug: 'niçoise-salad', title: 'Salade Niçoise', description: 'French tuna salad', prep: 20, cook: 10, total: 30, yield: 4, cuisine: 'french', cat: 'salads', img: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800' },
-  { slug: 'asian-salad', title: 'Sesame Ginger Salad', description: 'Asian-style salad', prep: 15, cook: 0, total: 15, yield: 4, cuisine: 'chinese', cat: 'salads', img: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800' },
-  { slug: 'couscous-salad', title: 'Mediterranean Couscous', description: 'Couscous with veggies', prep: 15, cook: 10, total: 25, yield: 6, cuisine: 'french', cat: 'salads', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800' },
-  
-  // More side dishes
-  { slug: 'roasted-vegetables', title: 'Roasted Mediterranean Vegetables', description: 'Mixed roasted veggies', prep: 15, cook: 35, total: 50, yield: 6, cuisine: 'french', cat: 'side-dishes', img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800' },
-  { slug: 'stuffing', title: 'Classic Stuffing', description: 'Bread stuffing', prep: 15, cook: 45, total: 60, yield: 8, cuisine: 'american', cat: 'side-dishes', img: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=800' },
-  { slug: 'mac-cheese', title: 'Baked Mac and Cheese', description: 'Creamy baked pasta', prep: 15, cook: 30, total: 45, yield: 8, cuisine: 'american', cat: 'side-dishes', img: 'https://images.unsplash.com/photo-1543339494-b4cd4f7ba686?w=800' },
-  { slug: 'risotto-mushroom', title: 'Mushroom Risotto', description: 'Creamy Italian rice', prep: 10, cook: 30, total: 40, yield: 4, cuisine: 'italian', cat: 'side-dishes', img: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800' },
-  { slug: 'pilaf', title: 'Herbed Rice Pilaf', description: 'Fluffy spiced rice', prep: 10, cook: 25, total: 35, yield: 6, cuisine: 'indian', cat: 'side-dishes', img: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
-  
-  // More desserts
-  { slug: 'baklava', title: 'Baklava', description: 'Honey pastry', prep: 30, cook: 45, total: 75, yield: 24, cuisine: 'indian', cat: 'desserts', img: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800' },
-  { slug: 'flan', title: 'Caramel Flan', description: 'Egg custard with caramel', prep: 15, cook: 45, total: 180, yield: 8, cuisine: 'mexican', cat: 'desserts', img: 'https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=800' },
-  { slug: 'mochi', title: 'Mochi Ice Cream', description: 'Japanese ice cream balls', prep: 20, cook: 0, total: 20, yield: 12, cuisine: 'japanese', cat: 'desserts', img: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800' },
-  { slug: 'profiteroles', title: 'Profiteroles', description: 'Choux pastry with cream', prep: 30, cook: 25, total: 55, yield: 8, cuisine: 'french', cat: 'desserts', img: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?w=800' },
-  { slug: 'affogato', title: 'Affogato', description: 'Coffee with ice cream', prep: 5, cook: 0, total: 5, yield: 1, cuisine: 'italian', cat: 'desserts', img: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800' },
+const cmap = {'mexican': '539d04d6-e193-4f0f-930a-90553fb21704','indian': 'fec72a8d-e056-400b-8370-f915b936317a','italian': 'f51d9e26-ace3-4b36-9d0c-6364877d3d94','thai': 'a3cb4471-db63-434e-a2e2-255242ffaca0','korean': '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28','american': '813587ed-24eb-421d-97be-f5f2d1740e86','japanese': 'a3cb4471-db63-434e-a2e2-255242ffaca0','chinese': '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28','french': '2f76ffd5-3152-4ed6-bb2a-5d4b1c09b07b','vietnamese': '8232ae82-2fa2-4f95-a9f1-bc7ddd817d28','greek': 'f51d9e26-ace3-4b36-9d0c-6364877d3d94','mediterranean': 'f51d9e26-ace3-4b36-9d0c-6364877d3d94'};
+const catmap = {'dinner': 'b0b02678-0692-4879-9470-f1b240a4f3c0','lunch': '01b3847c-f9a1-47df-ad45-e1e89bffc6d0','breakfast': '9ee5bf3c-f11a-4898-bb02-069c9c8c8c6d','desserts': 'd046d8c7-757b-4f7f-9b1c-f2d049bb46b8','appetizers': '15407c75-825b-4220-8764-5ec9107b4329','soups': '4e58e0b0-7108-4051-8017-55913860656d','salads': 'a79615ef-4074-4ecd-9909-8dd717b30671'};
+
+const recipes = [
+{title:'Pho Bo',description:'Vietnamese beef noodle soup',cuisine:'vietnamese',category:'dinner',prep:30,cook:180,img:'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800'},
+{title:'Bun Cha',description:'Vietnamese grilled pork with noodles',cuisine:'vietnamese',category:'dinner',prep:30,cook:20,img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800'},
+{title:'Banh Mi',description:'Vietnamese sandwich',cuisine:'vietnamese',category:'lunch',prep:15,cook:10,img:'https://images.unsplash.com/photo-1600688640154-9619e002df30?w=800'},
+{title:'Spring Rolls',description:'Fresh Vietnamese spring rolls',cuisine:'vietnamese',category:'appetizers',prep:30,cook:0,img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=800'},
+{title:'Vietnamese Coffee',description:'Strong iced coffee',cuisine:'vietnamese',category:'desserts',prep:5,cook:0,img:'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800'},
+{title:'Caesar Salad',description:'Classic romaine salad',cuisine:'american',category:'lunch',prep:15,cook:0,img:'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=800'},
+{title:'Club Sandwich',description:'Triple decker sandwich',cuisine:'american',category:'lunch',prep:15,cook:0,img:'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800'},
+{title:'BLT Sandwich',description:'Bacon lettuce tomato',cuisine:'american',category:'lunch',prep:10,cook:5,img:'https://images.unsplash.com/photo-1619096252214-23b1ea1e1618?w=800'},
+{title:'Reuben Sandwich',description:'Corned beef and sauerkraut',cuisine:'american',category:'lunch',prep:10,cook:10,img:'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800'},
+{title:'Grilled Cheese',description:'Cheese on toasted bread',cuisine:'american',category:'lunch',prep:5,cook:8,img:'https://images.unsplash.com/photo-1528736235302-52922df5a122?w=800'},
+{title:'Tomato Soup',description:'Creamy tomato soup',cuisine:'american',category:'soups',prep:10,cook:25,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Chicken Noodle Soup',description:'Classic chicken soup',cuisine:'american',category:'soups',prep:15,cook:30,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Clam Chowder',description:'New England clam chowder',cuisine:'american',category:'soups',prep:15,cook:30,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Minestrone',description:'Italian vegetable soup',cuisine:'italian',category:'soups',prep:20,cook:40,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'French Onion Soup',description:'Caramelized onion soup',cuisine:'french',category:'soups',prep:20,cook:60,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Gazpacho',description:'Spanish cold soup',cuisine:'mediterranean',category:'soups',prep:15,cook:0,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Miso Soup',description:'Japanese soybean paste soup',cuisine:'japanese',category:'soups',prep:5,cook:10,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Ramen Soup',description:'Japanese noodle soup',cuisine:'japanese',category:'soups',prep:20,cook:30,img:'https://images.unsplash.com/photo-1569718212165-3a8278d0f089?w=800'},
+{title:'Tom Kha Gai',description:'Thai coconut chicken soup',cuisine:'thai',category:'soups',prep:15,cook:25,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Sopa de Mariscos',description:'Mexican seafood soup',cuisine:'mexican',category:'soups',prep:20,cook:30,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Tortilla Soup',description:'Mexican chicken soup',cuisine:'mexican',category:'soups',prep:20,cook:30,img:'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'},
+{title:'Waldorf Salad',description:'Apple celery walnut salad',cuisine:'american',category:'salads',prep:15,cook:0,img:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'},
+{title:'Cobb Salad',description:'Chicken bacon egg salad',cuisine:'american',category:'salads',prep:20,cook:0,img:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'},
+{title:'Niçoise Salad',description:'French tuna salad',cuisine:'french',category:'salads',prep:20,cook:0,img:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'},
+{title:'Caprese Salad',description:'Tomato mozzarella basil',cuisine:'italian',category:'salads',prep:10,cook:0,img:'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=800'},
+{title:'Pasta Salad',description:'Cold pasta with vegetables',cuisine:'american',category:'salads',prep:20,cook:15,img:'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800'},
+{title:'Chicken Salad',description:'Creamy chicken salad',cuisine:'american',category:'salads',prep:15,cook:0,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'},
+{title:'Tuna Salad',description:'Classic tuna salad',cuisine:'american',category:'salads',prep:10,cook:0,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'},
+{title:'Egg Salad',description:'Creamy egg salad',cuisine:'american',category:'salads',prep:15,cook:10,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'},
+{title:'Potato Salad',description:'Classic American potato salad',cuisine:'american',category:'salads',prep:20,cook:20,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'},
 ];
 
-async function main() {
-  await client.connect();
-  
-  const cuisineResult = await client.query('SELECT name, id FROM cuisine');
-  const catResult = await client.query('SELECT name, slug, id FROM category');
-  
-  const cuisineMap = {};
-  cuisineResult.rows.forEach(r => cuisineMap[r.name.toLowerCase()] = r.id);
-  
-  const catMap = {};
-  catResult.rows.forEach(r => catMap[r.slug.toLowerCase()] = r.id);
-  
-  for (const r of RECIPES) {
-    const cuisineId = cuisineMap[r.cuisine] || cuisineMap['american'];
-    const catId = catMap[r.cat] || catMap['dinner'];
-    await client.query(
-      `INSERT INTO recipe (slug, title, description, prep_time, cook_time, total_time, yield, cuisine_id, category_id, image_url, status, published_at) 
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'published',NOW()) 
-       ON CONFLICT (slug) DO UPDATE SET cuisine_id = $8, category_id = $9, image_url = $10`,
-      [r.slug, r.title, r.description, r.prep, r.cook, r.total, r.yield, cuisineId, catId, r.img]
-    );
-    console.log('Added:', r.title);
+async function add() {
+  const client = await pool.connect();
+  let count = 0;
+  for (let i = 0; i < recipes.length; i++) {
+    const r = recipes[i];
+    const slug = r.title.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now() + '-' + (i + 300);
+    try {
+      const result = await client.query(`INSERT INTO recipe (slug, title, description, prep_time, cook_time, total_time, yield, status, cuisine_id, category_id, image_url) VALUES ($1, $2, $3, $4, $5, $6, 4, 'published', $7, $8, $9) RETURNING id`,[slug, r.title, r.description, r.prep, r.cook, r.prep+r.cook, cmap[r.cuisine]||cmap['american'], catmap[r.category]||catmap['dinner'], r.img]);
+      await client.query(`INSERT INTO recipe_score (recipe_id, general_score) VALUES ($1, $2)`,[result.rows[0].id, Math.floor(Math.random()*30)+60]);
+      count++;
+    } catch(e) { if(e.code!=='23505')console.log('e',e.message); }
   }
-  
-  const count = await client.query('SELECT COUNT(*) FROM recipe');
-  console.log('Total recipes:', count.rows[0].count);
-  
-  await client.end();
+  const total = await client.query('SELECT COUNT(*) FROM recipe');
+  console.log(`Added ${count}, Total:${total.rows[0].count}`);
+  client.release(); await pool.end();
 }
-
-main().catch(console.error);
+add().catch(console.error);

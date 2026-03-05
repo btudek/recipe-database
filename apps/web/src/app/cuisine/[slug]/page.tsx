@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { getRecipes, getCuisines, getDiets, getRecipeScores } from '@/lib/supabase';
 
 interface Recipe {
   id: string;
@@ -16,76 +16,103 @@ interface Recipe {
   imageUrl: string | null;
   cuisine: { name: string; slug: string };
   category: { name: string; slug: string };
-}
-
-interface CuisineData {
-  cuisine: { name: string; description: string };
-  recipes: Recipe[];
+  diet: { id: string; name: string } | null;
+  healthScore?: number;
 }
 
 export default function CuisinePage() {
   const params = useParams();
-  const [data, setData] = useState<CuisineData | null>(null);
+  const slug = params.slug as string;
+  
+  const [cuisineName, setCuisineName] = useState<string>('');
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [diets, setDiets] = useState<any[]>([]);
+  const [selectedDiet, setSelectedDiet] = useState('');
 
   useEffect(() => {
-    async function fetchCuisine() {
+    async function fetchData() {
+      if (!slug) return;
+      
       try {
-        const res = await fetch(`${API_URL}/api/cuisine/${params.slug}`);
-        const data = await res.json();
-        setData(data);
+        // Get all cuisines to find the cuisine name
+        const cuisinesData = await getCuisines();
+        const cuisine = (cuisinesData || []).find((c: any) => c.slug === slug);
+        setCuisineName(cuisine?.name || slug.charAt(0).toUpperCase() + slug.slice(1));
+        
+        // Get all diets
+        const dietsData = await getDiets();
+        setDiets(dietsData || []);
+        
+        // Get all recipes
+        const allRecipes = await getRecipes();
+        
+        // Filter recipes by cuisine slug
+        const cuisineRecipes = (allRecipes || []).filter((r: any) => r.cuisine?.slug === slug);
+        
+        // Get health scores
+        const recipeIds = cuisineRecipes.map((r: any) => r.id);
+        const scores = await getRecipeScores(recipeIds);
+        
+        // Attach scores to recipes
+        const recipesWithScores = cuisineRecipes.map((r: any) => ({
+          ...r,
+          healthScore: scores[r.id] || null
+        }));
+        
+        setRecipes(recipesWithScores);
       } catch (error) {
         console.error('Failed to fetch:', error);
       } finally {
         setLoading(false);
       }
     }
-    if (params.slug) {
-      fetchCuisine();
-    }
-  }, [params.slug]);
+    fetchData();
+  }, [slug]);
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!data) return <div className="p-8 text-center">Cuisine not found</div>;
+  // Filter recipes by diet
+  const filteredRecipes = selectedDiet 
+    ? recipes.filter(r => r.diet?.id === selectedDiet)
+    : recipes;
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-2">{data.cuisine.name} Recipes</h1>
-      <p className="text-gray-600 mb-6">{data.cuisine.description}</p>
+      <h1 className="text-4xl font-bold mb-2 text-white">{cuisineName} Recipes</h1>
+      <p className="text-gray-400 mb-6">Explore our {cuisineName} recipe collection</p>
 
-      {/* View Toggle */}
-      <div className="flex justify-between items-center mb-6">
-        <span className="text-gray-500">{data.recipes.length} recipes</span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`px-3 py-1 rounded ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}
-          >
-            Grid
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}
-          >
-            List
-          </button>
-        </div>
+      {/* Diet Filter */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <span className="text-gray-500">Diet:</span>
+        <select
+          value={selectedDiet}
+          onChange={(e) => setSelectedDiet(e.target.value)}
+          className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">All Diets</option>
+          {diets.map((diet) => (
+            <option key={diet.id} value={diet.id}>{diet.name}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Recipe Grid/List */}
-      {data.recipes.length === 0 ? (
-        <p className="text-gray-500">No recipes yet in this cuisine.</p>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
+      {/* Recipe Count */}
+      <p className="text-gray-400 mb-6">{filteredRecipes.length} recipes</p>
+
+      {/* Recipe Grid */}
+      {filteredRecipes.length === 0 ? (
+        <p className="text-gray-500">No recipes found in this cuisine.</p>
       ) : (
-        <div className="space-y-4">
-          {data.recipes.map((recipe) => (
-            <RecipeListItem key={recipe.id} recipe={recipe} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRecipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} diets={diets} />
           ))}
         </div>
       )}
@@ -93,21 +120,36 @@ export default function CuisinePage() {
   );
 }
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
+function RecipeCard({ recipe, diets }: { recipe: Recipe; diets: any[] }) {
   const totalTime = recipe.prepTime + recipe.cookTime;
+  const dietInfo = recipe.diet ? diets.find(d => d.id === recipe.diet?.id) : null;
   
   return (
-    <Link href={`/recipe/${recipe.slug}`} className="recipe-card group">
-      <div className="relative h-48 bg-gray-200 flex items-center justify-center">
+    <Link href={`/recipe/${recipe.slug}`} className="bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all">
+      <div className="h-48 bg-gray-800 relative overflow-hidden">
         {recipe.imageUrl ? (
-          <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
+          <Image 
+            src={recipe.imageUrl} 
+            alt={recipe.title} 
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+          />
         ) : (
-          <div className="text-6xl">🍽️</div>
+          <div className="flex items-center justify-center h-full text-5xl">🍽️</div>
+        )}
+        {recipe.healthScore !== undefined && recipe.healthScore !== null && (
+          <HealthScoreBadge score={recipe.healthScore} />
+        )}
+        {dietInfo && (
+          <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+            {dietInfo.name}
+          </div>
         )}
       </div>
-      <div className="recipe-card-content">
-        <span className="text-sm text-primary-600 font-medium">{recipe.cuisine.name}</span>
-        <h3 className="font-semibold text-lg mt-1 group-hover:text-primary-600">{recipe.title}</h3>
+      <div className="p-4">
+        <span className="text-sm text-primary-400 font-medium">{recipe.cuisine?.name}</span>
+        <h3 className="font-semibold text-lg mt-1 text-white">{recipe.title}</h3>
         <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
           <span>⏱️ {totalTime} min</span>
         </div>
@@ -116,26 +158,22 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
   );
 }
 
-function RecipeListItem({ recipe }: { recipe: Recipe }) {
-  const totalTime = recipe.prepTime + recipe.cookTime;
+function HealthScoreBadge({ score }: { score: number }) {
+  let colorClass = '';
+  
+  if (score >= 75) {
+    colorClass = 'bg-green-600';
+  } else if (score >= 50) {
+    colorClass = 'bg-yellow-500';
+  } else if (score >= 25) {
+    colorClass = 'bg-orange-500';
+  } else {
+    colorClass = 'bg-red-600';
+  }
   
   return (
-    <Link href={`/recipe/${recipe.slug}`} className="flex gap-4 p-4 bg-white rounded-lg border hover:border-primary-300 transition-colors">
-      <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-        {recipe.imageUrl ? (
-          <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover rounded" />
-        ) : (
-          <span className="text-3xl">🍽️</span>
-        )}
-      </div>
-      <div>
-        <h3 className="font-semibold text-lg">{recipe.title}</h3>
-        <p className="text-gray-600 text-sm line-clamp-2">{recipe.description}</p>
-        <div className="flex gap-4 mt-2 text-sm text-gray-500">
-          <span>⏱️ {totalTime} min</span>
-          <span>{recipe.cuisine.name}</span>
-        </div>
-      </div>
-    </Link>
+    <div className={`absolute top-2 right-2 ${colorClass} text-white text-xs font-bold px-2 py-1 rounded-full`}>
+      {score}
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getRecipePhoto } from '@/lib/supabase';
 
 interface RecipePreview {
   id: string;
@@ -13,16 +14,6 @@ interface RecipePreview {
   cuisine: { name: string; slug: string };
   cookTime: number;
 }
-
-const RECIPE_PHOTOS: Record<string, string> = {
-  'spaghetti-carbonara': 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800',
-  'chicken-tacos': 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
-  'sushi-rolls': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
-  'beef-bourguignon': 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=800',
-  'pad-thai': 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
-  'margherita-pizza': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800',
-  'chocolate-lava-cake': 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800',
-};
 
 export default function FavoritesPage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
@@ -73,17 +64,20 @@ export default function FavoritesPage() {
             <div key={recipe.id} className="bg-gray-900 rounded-xl overflow-hidden">
               <Link href={`/recipe/${recipe.slug}`}>
                 <div className="relative h-48 bg-gray-800">
-                  {recipe.imageUrl || RECIPE_PHOTOS[recipe.slug] ? (
+                  {recipe.imageUrl ? (
                     <Image
-                      src={recipe.imageUrl || RECIPE_PHOTOS[recipe.slug] || ''}
+                      src={recipe.imageUrl}
                       alt={recipe.title}
                       fill
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-4xl">
-                      🍳
-                    </div>
+                    <Image
+                      src={getRecipePhoto(recipe.slug)}
+                      alt={recipe.title}
+                      fill
+                      className="object-cover"
+                    />
                   )}
                 </div>
               </Link>

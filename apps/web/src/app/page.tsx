@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRecipes, getCuisines, getRecipeScores } from '@/lib/supabase';
+import { getRecipes, getCuisines, getCategories, getDiets, getRecipeScores } from '@/lib/supabase';
+import { AdHorizontal, AdFluid } from '@/components/AdUnit';
 
 interface Recipe {
   id: string;
@@ -14,20 +15,31 @@ interface Recipe {
   cookTime: number;
   imageUrl: string | null;
   cuisine: { name: string; slug: string };
+  category: { name: string; slug: string };
+  diet: { id: string; name: string } | null;
   healthScore?: number;
 }
 
 export default function HomePage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [cuisines, setCuisines] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [diets, setDiets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [selectedCuisine, setSelectedCuisine] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedDiet, setSelectedDiet] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [recipesData, cuisinesData] = await Promise.all([
+        const [recipesData, cuisinesData, categoriesData, dietsData] = await Promise.all([
           getRecipes(),
           getCuisines(),
+          getCategories(),
+          getDiets(),
         ]);
         
         // Get health scores for recipes
@@ -42,6 +54,8 @@ export default function HomePage() {
         
         setRecipes(recipesWithScores.slice(0, 6));
         setCuisines(cuisinesData || []);
+        setCategories(categoriesData || []);
+        setDiets(dietsData || []);
       } catch (error) {
         console.error('Failed to fetch:', error);
       } finally {
@@ -50,6 +64,55 @@ export default function HomePage() {
     }
     fetchData();
   }, []);
+
+  // Fetch recipes when filters change
+  useEffect(() => {
+    async function fetchFilteredRecipes() {
+      setLoading(true);
+      try {
+        const filters: any = {};
+        if (selectedCuisine) filters.cuisine = selectedCuisine;
+        if (selectedCategory) filters.category = selectedCategory;
+        if (selectedDiet) filters.diet = selectedDiet;
+        
+        const recipesData = await getRecipes(Object.keys(filters).length > 0 ? filters : undefined);
+        
+        // Get all diets for lookup
+        const dietsData = await getDiets();
+        
+        // Get health scores for recipes
+        const recipeIds = (recipesData || []).map((r: any) => r.id);
+        const scores = await getRecipeScores(recipeIds);
+        
+        // Attach scores and diet names to recipes
+        const recipesWithScores = (recipesData || []).map((r: any) => ({
+          ...r,
+          healthScore: scores[r.id] || null,
+          diet: r.diet_id ? { id: r.diet_id, name: dietsData.find((d: any) => d.id === r.diet_id)?.name || null } : null
+        }));
+        
+        setRecipes(recipesWithScores);
+        setDiets(dietsData || []);
+      } catch (error) {
+        console.error('Failed to fetch filtered recipes:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    // Only fetch if any filter is selected (after initial load)
+    if (selectedCuisine || selectedCategory || selectedDiet) {
+      fetchFilteredRecipes();
+    }
+  }, [selectedCuisine, selectedCategory, selectedDiet]);
+
+  const clearFilters = () => {
+    setSelectedCuisine('');
+    setSelectedCategory('');
+    setSelectedDiet('');
+  };
+
+  const hasFilters = selectedCuisine || selectedCategory || selectedDiet;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -74,43 +137,121 @@ export default function HomePage() {
             Search
           </button>
         </form>
+        
+        <div className="mt-6">
+          <Link 
+            href="/recipes" 
+            className="inline-block px-8 py-4 bg-primary-600 text-white text-lg font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Browse All Recipes
+          </Link>
+        </div>
+      </section>
+
+      {/* Ad */}
+      <AdHorizontal />
+
+      {/* Filters */}
+      <section className="mb-8 p-4 bg-gray-900 rounded-lg border border-gray-800">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="text-white font-medium">Filters:</span>
+          
+          <select
+            value={selectedCuisine}
+            onChange={(e) => setSelectedCuisine(e.target.value)}
+            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">All Cuisines</option>
+            {cuisines.map((cuisine) => (
+              <option key={cuisine.id} value={cuisine.id}>{cuisine.name}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedDiet}
+            onChange={(e) => setSelectedDiet(e.target.value)}
+            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">All Diets</option>
+            {diets.map((diet) => (
+              <option key={diet.id} value={diet.id}>{diet.name}</option>
+            ))}
+          </select>
+          
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Recipes */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 text-white">Featured Recipes</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">
+            {hasFilters ? 'Filtered Recipes' : 'Featured Recipes'}
+          </h2>
+          {!hasFilters && (
+            <Link href="/recipes" className="text-primary-400 hover:text-primary-300 font-medium">
+              View All →
+            </Link>
+          )}
+        </div>
         {loading ? (
           <p className="text-gray-500">Loading recipes...</p>
         ) : recipes.length === 0 ? (
-          <p className="text-gray-500">No recipes yet!</p>
+          <p className="text-gray-500">No recipes found!</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} diets={diets} />
             ))}
           </div>
         )}
       </section>
 
+      {/* Ad */}
+      <AdHorizontal />
+      <AdFluid />
+
       {/* Cuisines */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 text-white">Browse by Cuisine</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Browse by Cuisine</h2>
+          <Link href="/cuisines" className="text-primary-400 hover:text-primary-300 font-medium">
+            View All →
+          </Link>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {cuisines.map((cuisine) => (
+          {cuisines.slice(0, 6).map((cuisine) => (
             <CuisineCard key={cuisine.id} name={cuisine.name} slug={cuisine.slug} />
           ))}
-          <CuisineCard name="Italian" slug="italian" />
-          <CuisineCard name="Mexican" slug="mexican" />
-          <CuisineCard name="Chinese" slug="chinese" />
-          <CuisineCard name="Japanese" slug="japanese" />
-          <CuisineCard name="Indian" slug="indian" />
-          <CuisineCard name="French" slug="french" />
         </div>
       </section>
 
       {/* Categories */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 text-white">Browse by Category</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Browse by Category</h2>
+          <Link href="/categories" className="text-primary-400 hover:text-primary-300 font-medium">
+            View All →
+          </Link>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <CategoryCard name="Breakfast" slug="breakfast" icon="🍳" />
           <CategoryCard name="Lunch" slug="lunch" icon="🥗" />
@@ -126,7 +267,10 @@ export default function HomePage() {
   );
 }
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
+function RecipeCard({ recipe, diets }: { recipe: Recipe; diets: any[] }) {
+  // Find diet name from diets array
+  const dietInfo = recipe.diet ? diets.find(d => d.id === recipe.diet?.id) : null;
+  
   return (
     <Link href={`/recipe/${recipe.slug}`} className="bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all">
       <div className="h-48 bg-gray-800 flex items-center justify-center overflow-hidden relative">
@@ -144,6 +288,12 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         )}
         {recipe.healthScore !== undefined && recipe.healthScore !== null && (
           <HealthScoreBadge score={recipe.healthScore} />
+        )}
+        {/* Diet Tag */}
+        {dietInfo && (
+          <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+            {dietInfo.name}
+          </div>
         )}
       </div>
       <div className="p-4">

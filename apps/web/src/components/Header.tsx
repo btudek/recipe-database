@@ -7,9 +7,13 @@ export function Header() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (e) {
+      console.error('Error loading user:', e);
     }
   }, []);
 
@@ -32,6 +36,9 @@ export function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
+            <Link href="/recipes" className="text-gray-300 hover:text-white">
+              All Recipes
+            </Link>
             <Link href="/cuisines" className="text-gray-300 hover:text-white">
               Cuisines
             </Link>

@@ -5,6 +5,9 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getRecipe, getRecipeScore } from '@/lib/supabase';
+import { getHealthierSwaps, getCategoryColor, getCategoryLabel, SwapSuggestion } from '@/lib/healthierSwaps';
+import RecipeSEO from '@/components/RecipeSEO';
+import { AdHorizontal, AdRectangle } from '@/components/AdUnit';
 
 interface Ingredient {
   name: string;
@@ -30,6 +33,7 @@ interface Recipe {
   yield: number;
   cuisine: { name: string; slug: string };
   category: { name: string; slug: string };
+  diet?: { id: string; name: string } | null;
   imageUrl: string | null;
   ingredients: Ingredient[];
   steps: Step[];
@@ -181,7 +185,8 @@ export default function RecipePage() {
           return null;
         }
         // Get health score for this recipe
-        const score = await getRecipeScore(data.id);
+        const scoreData = await getRecipeScore(data.id);
+        const score = scoreData?.general_score ?? scoreData?.score ?? null;
         return { ...data, healthScore: score };
       })
       .then(dataWithScore => {
@@ -316,6 +321,7 @@ export default function RecipePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {recipe && <RecipeSEO recipe={recipe} />}
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-primary-400">Home</Link>
         <span className="mx-2">›</span>
@@ -339,10 +345,17 @@ export default function RecipePage() {
       </div>
 
       <div className="flex items-start justify-between mb-4">
-        <h1 className={`text-3xl md:text-4xl font-bold ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
-          {recipe.title}
-          {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
-        </h1>
+        <div>
+          <h1 className={`text-3xl md:text-4xl font-bold ${michelinMode ? 'text-amber-400' : 'text-white'}`}>
+            {recipe.title}
+            {michelinMode && <span className="text-2xl ml-2">👨‍🍳</span>}
+          </h1>
+          {recipe.diet && (
+            <span className="inline-block mt-2 bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+              {recipe.diet.name}
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={handlePrint}
@@ -375,6 +388,49 @@ export default function RecipePage() {
         <div className="mb-4">
           <HealthScoreDisplay score={recipe.healthScore} />
         </div>
+      )}
+
+      {/* Healthier Swaps Section - Show when score < 50 */}
+      {recipe.healthScore !== undefined && recipe.healthScore !== null && recipe.healthScore < 50 && (
+        <section className="mb-8 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-700">
+          <h2 className="text-2xl font-bold text-green-400 mb-4">🥗 Healthier Swaps</h2>
+          <p className="text-gray-400 mb-4">
+            Boost this recipe's health score with these simple ingredient swaps:
+          </p>
+          <div className="grid gap-3">
+            {(() => {
+              const swaps = getHealthierSwaps(recipe.ingredients);
+              return swaps.length > 0 ? (
+                swaps.map((swap, index) => (
+                  <div 
+                    key={index}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${getCategoryColor(swap.category)}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">→</span>
+                      <span className="text-white">
+                        <span className="line-through text-gray-400">{swap.original}</span>
+                        {' → '}
+                        <span className="font-medium">{swap.replacement}</span>
+                      </span>
+                    </div>
+                    <span className="font-bold text-green-400">+{swap.points} pts</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">Try adding more vegetables or lean proteins to improve the score!</p>
+              );
+            })()}
+          </div>
+          {recipe.healthScore !== undefined && (
+            <p className="mt-4 text-sm text-gray-400">
+              💡 Making these changes could raise the score from {recipe.healthScore} to{' '}
+              <span className="text-green-400 font-bold">
+                {Math.min(100, recipe.healthScore + getHealthierSwaps(recipe.ingredients).reduce((acc, s) => acc + s.points, 0))}
+              </span>
+            </p>
+          )}
+        </section>
       )}
 
       {/* Rating */}
@@ -441,6 +497,9 @@ export default function RecipePage() {
         </ul>
       </section>
 
+      {/* Ad */}
+      <AdHorizontal />
+
       {/* Nutrition Info */}
       {recipe.nutrition && (
         <section className="mb-8">
@@ -494,6 +553,9 @@ export default function RecipePage() {
           ))}
         </ol>
       </section>
+
+      {/* Ad */}
+      <AdRectangle />
 
       {/* Comments Section */}
       <section className="mb-8">

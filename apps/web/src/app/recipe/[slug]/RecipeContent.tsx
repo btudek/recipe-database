@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AdUnit } from '@/components/AdUnit';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -52,6 +53,13 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) setUser(JSON.parse(storedUser));
+    
+    // Load saved state from localStorage
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    if (favorites.includes(recipe.id)) {
+      setSaved(true);
+    }
+    
     fetchComments();
   }, [recipe.id]);
 
@@ -64,18 +72,29 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
   };
 
   const handleSave = async () => {
-    if (!user) {
-      alert('Please login to save recipes');
-      return;
+    // Toggle saved state and persist to localStorage
+    const newSavedState = !saved;
+    setSaved(newSavedState);
+    
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let newFavorites;
+    if (newSavedState) {
+      newFavorites = [...favorites, recipe.id];
+    } else {
+      newFavorites = favorites.filter((id: string) => id !== recipe.id);
     }
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/api/recipes/${recipe.id}/save`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSaved(!saved);
-    } catch (e) { console.error(e); }
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+    
+    // Optionally sync with API if user is logged in
+    if (user) {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`${API_URL}/api/recipes/${recipe.id}/save`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (e) { console.error(e); }
+    }
   };
 
   const handleRate = async (value: number) => {
@@ -128,6 +147,11 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Print-only header */}
+      <div className="print-header" style={{ display: 'none' }}>
+        <h1>{recipe.title}</h1>
+        <p className="site-name">Recipe Database</p>
+      </div>
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-primary-600">Home</Link>
@@ -207,10 +231,8 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
         </ul>
       </section>
 
-      {/* Ad placeholder */}
-      <div className="my-8 bg-gray-100 py-8 text-center text-gray-400">
-        Advertisement
-      </div>
+      {/* Ad after ingredients */}
+      <AdUnit slot="4582969457" />
 
       {/* Instructions */}
       <section className="mb-8">
@@ -234,6 +256,9 @@ export default function RecipePage({ recipe }: { recipe: Recipe }) {
           ))}
         </ol>
       </section>
+
+      {/* Ad after instructions */}
+      <AdUnit slot="4582969457" />
 
       {/* Pro Tips */}
       {recipe.proTips && (

@@ -48,6 +48,7 @@ model Recipe {
   
   cuisineId       String
   categoryId      String
+  dietId          String?
   
   primaryKeyword  String?
   metaTitle       String?
@@ -67,6 +68,7 @@ model Recipe {
 
   cuisine         Cuisine       @relation(fields: [cuisineId], references: [id])
   category        Category      @relation(fields: [categoryId], references: [id])
+  diet            Diet?         @relation(fields: [dietId], references: [id])
   ingredients     Ingredient[]
   steps           RecipeStep[]
   versions        RecipeVersion[]
@@ -79,6 +81,7 @@ model Recipe {
 
   @@index([cuisineId])
   @@index([categoryId])
+  @@index([dietId])
   @@index([status, publishedAt])
   @@index([slug])
 }
@@ -118,6 +121,19 @@ model Category {
   slug        String   @unique
   description String?
   imageUrl    String?
+  
+  recipes     Recipe[]
+}
+
+// ============================================
+// DIET
+// ============================================
+
+model Diet {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
   
   recipes     Recipe[]
 }

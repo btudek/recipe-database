@@ -1,24 +1,22 @@
-const { Client } = require('pg');
-const client = new Client({ 
-  host: 'db.ycwbumsmlikiquplkdln.supabase.co', 
-  port: 5432, 
-  database: 'postgres', 
-  user: 'postgres', 
-  password: 'HailMaryFullOfGrace1$' 
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: 'db.ycwbumsmlikiquplkdln.supabase.co',
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres',
+  password: 'HailMaryFullOfGrace1$'
 });
 
-client.connect()
-  .then(() => client.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['recipe']))
-  .then(r => {
-    console.log('Recipe columns:', r.rows.map(x => x.column_name).join(', '));
-    return client.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['ingredient']);
-  })
-  .then(r => {
-    console.log('Ingredient columns:', r.rows.map(x => x.column_name).join(', '));
-    return client.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['step']);
-  })
-  .then(r => {
-    console.log('Step columns:', r.rows.map(x => x.column_name).join(', '));
-    client.end();
-  })
-  .catch(e => { console.error(e); client.end(); });
+async function check() {
+  const client = await pool.connect();
+  const tables = ['Recipe', 'Ingredient', 'RecipeStep'];
+  for (const t of tables) {
+    const r = await client.query(`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '${t}'`);
+    console.log(`\n=== ${t} ===`);
+    console.log(r.rows.map(x => x.column_name).join(', '));
+  }
+  client.release();
+  await pool.end();
+}
+
+check();

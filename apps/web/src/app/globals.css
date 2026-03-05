@@ -36,12 +36,56 @@ body {
 
 /* Print styles */
 @media print {
-  .no-print {
+  /* Hide everything by default */
+  nav,
+  header,
+  footer,
+  .no-print,
+  .bg-gray-100,
+  .bg-gray-50,
+  .bg-gray-900,
+  .bg-gray-800,
+  .bg-blue-50,
+  .bg-amber-50,
+  .bg-primary-600,
+  button,
+  a,
+  .ad-container,
+  [class*="AdUnit"],
+  form,
+  .rating,
+  .comments,
+  .pro-tips,
+  .storage,
+  section[class*="comments"],
+  section:nth-last-child(2),
+  section:last-child,
+  .flex,
+  .text-sm,
+  .text-gray,
+  .mb-6,
+  .mb-8 {
     display: none !important;
   }
   
-  .print-only {
+  /* Show print header */
+  .print-header {
     display: block !important;
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .print-header h1 {
+    font-size: 24pt;
+    margin-bottom: 5px;
+    color: black !important;
+  }
+  
+  .print-header .site-name {
+    font-size: 14pt;
+    color: #666;
   }
   
   body {
@@ -49,10 +93,64 @@ body {
     line-height: 1.5;
     background: white !important;
     color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
-  .recipe-container {
+  /* Keep recipe container but remove background */
+  .max-w-4xl {
     max-width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Keep sections visible */
+  section {
+    display: block !important;
+    margin-bottom: 20px !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Hide section headings that aren't ingredients or instructions */
+  h2 {
+    font-size: 16pt;
+    margin-bottom: 10px !important;
+    color: black !important;
+  }
+  
+  /* Keep ingredients list */
+  section:first-of-type h2,
+  section:nth-of-type(2) h2 {
+    display: block !important;
+  }
+  
+  section:first-of-type ul {
+    display: block !important;
+  }
+  
+  section:first-of-type li {
+    display: list-item !important;
+    list-style: disc;
+    margin-left: 20px;
+    border: none !important;
+  }
+  
+  /* Keep instructions */
+  section:nth-of-type(2) ol {
+    display: block !important;
+  }
+  
+  section:nth-of-type(2) ol li {
+    display: list-item !important;
+    list-style: decimal;
+    margin-left: 20px;
+    border: none !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Remove dark backgrounds */
+  div, section, li, p, span {
+    background: white !important;
+    color: black !important;
   }
 }

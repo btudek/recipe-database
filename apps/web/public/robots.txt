@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://web-tau-weld-69.vercel.app/sitemap.xml
+Sitemap: https://therecipedatabase.net/sitemap.xml
+
+# Crawl-delay: 1

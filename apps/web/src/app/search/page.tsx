@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { searchRecipes } from '@/lib/supabase';
+import Image from 'next/image';
+import { searchRecipes, getRecipePhoto } from '@/lib/supabase';
 
 interface Recipe {
   id: string;
@@ -12,6 +13,7 @@ interface Recipe {
   description: string;
   prepTime: number;
   cookTime: number;
+  imageUrl: string | null;
   cuisine: { name: string; slug: string };
 }
 
@@ -76,8 +78,24 @@ function SearchContent() {
               href={`/recipe/${recipe.slug}`}
               className="flex gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-primary-600"
             >
-              <div className="w-32 h-24 bg-gray-800 rounded flex items-center justify-center flex-shrink-0">
-                <span className="text-3xl">🍽️</span>
+              <div className="w-32 h-24 bg-gray-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {recipe.imageUrl ? (
+                  <Image
+                    src={recipe.imageUrl}
+                    alt={recipe.title}
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={getRecipePhoto(recipe.slug)}
+                    alt={recipe.title}
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                )}
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-white">{recipe.title}</h3>

@@ -2,113 +2,70 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getRecipes } from '@/lib/supabase';
+import Image from 'next/image';
+import { getCategories } from '@/lib/supabase';
 
-interface Recipe {
+interface Category {
   id: string;
+  name: string;
   slug: string;
-  title: string;
-  description: string;
-  prepTime: number;
-  cookTime: number;
+  description: string | null;
   imageUrl: string | null;
-  cuisine: { name: string; slug: string };
-  category: { name: string; slug: string };
 }
 
-const RECIPE_PHOTOS: Record<string, string> = {
-  'spaghetti-carbonara': 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800',
-  'chicken-tacos': 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
-  'sushi-rolls': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
-  'beef-bourguignon': 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=800',
-  'pad-thai': 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
-  'margherita-pizza': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800',
-  'chocolate-lava-cake': 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800',
-};
-
 export default function CategoriesPage() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getRecipes()
+    getCategories()
       .then(data => {
-        setRecipes(data || []);
+        setCategories(data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
-  const categories = [
-    { name: 'All', slug: 'all' },
-    { name: 'Breakfast', slug: 'breakfast' },
-    { name: 'Lunch', slug: 'lunch' },
-    { name: 'Dinner', slug: 'dinner' },
-    { name: 'Desserts', slug: 'desserts' },
-    { name: 'Appetizers', slug: 'appetizers' },
-    { name: 'Soups', slug: 'soups' },
-    { name: 'Salads', slug: 'salads' },
-  ];
+  const categoryImages: Record<string, string> = {
+    breakfast: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400',
+    lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+    dinner: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400',
+    desserts: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400',
+    appetizers: 'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=400',
+    soups: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',
+    salads: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
+  };
 
-  const filteredRecipes = selectedCategory === 'all' 
-    ? recipes 
-    : recipes.filter(r => r.category?.slug === selectedCategory);
+  const defaultImage = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-white mb-8">📂 Browse by Category</h1>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {categories.map(cat => (
-          <button
-            key={cat.slug}
-            onClick={() => setSelectedCategory(cat.slug)}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedCategory === cat.slug
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Recipe Count */}
-      <p className="text-gray-400 mb-4">{filteredRecipes.length} recipes found</p>
-
-      {/* Recipes Grid */}
       {loading ? (
         <p className="text-gray-500">Loading...</p>
-      ) : filteredRecipes.length === 0 ? (
-        <p className="text-gray-500">No recipes in this category yet.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRecipes.map((recipe) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {categories.map((category) => (
             <Link 
-              key={recipe.id} 
-              href={`/recipe/${recipe.slug}`}
+              key={category.id} 
+              href={`/category/${category.slug}`}
               className="bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all"
             >
-              <div className="h-48 bg-gray-800 relative overflow-hidden">
-                {recipe.imageUrl || RECIPE_PHOTOS[recipe.slug] ? (
-                  <img 
-                    src={recipe.imageUrl || RECIPE_PHOTOS[recipe.slug]} 
-                    alt={recipe.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-5xl">🍽️</div>
-                )}
+              <div className="h-32 bg-gray-800 relative overflow-hidden">
+                <Image
+                  src={categoryImages[category.slug] || defaultImage}
+                  alt={category.name}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover"
+                />
               </div>
               <div className="p-4">
-                <span className="text-sm text-primary-400 font-medium">{recipe.cuisine?.name}</span>
-                <h3 className="font-semibold text-lg mt-1 text-white">{recipe.title}</h3>
-                <div className="flex items-center mt-2 text-sm text-gray-500">
-                  <span>⏱️ {recipe.prepTime + recipe.cookTime} min</span>
-                </div>
+                <h2 className="font-semibold text-lg text-white">{category.name}</h2>
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                  {category.description || `Browse ${category.name} recipes`}
+                </p>
               </div>
             </Link>
           ))}

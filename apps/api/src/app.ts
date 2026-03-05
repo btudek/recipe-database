@@ -27,12 +27,13 @@ app.get('/health', async () => ({ status: 'ok' }));
 // ============================================
 
 app.get('/api/recipes', async (request: any) => {
-  const { cuisine, category, search, limit = 20, offset = 0 } = request.query as any;
+  const { cuisine, category, diet, search, limit = 20, offset = 0 } = request.query as any;
   
   const where: any = { status: 'published' };
   
   if (cuisine) where.cuisineId = cuisine;
   if (category) where.categoryId = category;
+  if (diet) where.dietId = diet;
   if (search) {
     where.OR = [
       { title: { contains: search, mode: 'insensitive' } },
@@ -42,7 +43,7 @@ app.get('/api/recipes', async (request: any) => {
 
   return prisma.recipe.findMany({
     where,
-    include: { cuisine: true, category: true },
+    include: { cuisine: true, category: true, diet: true },
     take: limit,
     skip: offset,
     orderBy: { publishedAt: 'desc' },
@@ -57,6 +58,7 @@ app.get('/api/recipes/:slug', async (request: any) => {
     include: { 
       cuisine: true, 
       category: true,
+      diet: true,
       ingredients: { orderBy: { orderIndex: 'asc' } },
       steps: { orderBy: { stepNumber: 'asc' } },
     },
@@ -171,6 +173,12 @@ app.get('/api/cuisines', async () => {
 
 app.get('/api/categories', async () => {
   return prisma.category.findMany({
+    include: { _count: { select: { recipes: { where: { status: 'published' } } } } },
+  });
+});
+
+app.get('/api/diets', async () => {
+  return prisma.diet.findMany({
     include: { _count: { select: { recipes: { where: { status: 'published' } } } } },
   });
 });
@@ -346,6 +354,29 @@ app.get('/api/cuisine/:slug', async (request: any) => {
   });
 
   return { cuisine, recipes };
+});
+
+// ============================================
+// CATEGORY PAGE
+// ============================================
+
+app.get('/api/category/:slug', async (request: any) => {
+  const { slug } = request.params;
+
+  const category = await prisma.category.findUnique({
+    where: { slug },
+  });
+
+  if (!category) {
+    throw { statusCode: 404, message: 'Category not found' };
+  }
+
+  const recipes = await prisma.recipe.findMany({
+    where: { categoryId: category.id, status: 'published' },
+    include: { cuisine: true, category: true },
+  });
+
+  return { category, recipes };
 });
 
 // ============================================
