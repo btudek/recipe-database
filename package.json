@@ -38,10 +38,6 @@
     "node": ">=18.0.0"
   },
   "author": "GitHub Inc.",
-  "files": [
-    "bin/",
-    "lib/"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/btudek/recipe-database.git"
