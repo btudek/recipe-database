@@ -1,8 +1,4 @@
 {
-  "projects": [
-    {
-      "path": "apps/web",
-      "framework": "nextjs"
-    }
-  ]
+  "buildCommand": "cd apps/web && npm run build",
+  "installCommand": "cd apps/web && npm install"
 }
