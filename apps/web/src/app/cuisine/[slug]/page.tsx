@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getRecipes, getCuisines, getDiets, getRecipeScores } from '@/lib/supabase';
+import { getRecipePhoto as getPhoto } from '@/lib/photos';
 
 interface Recipe {
   id: string;
@@ -127,9 +128,9 @@ function RecipeCard({ recipe, diets }: { recipe: Recipe; diets: any[] }) {
   return (
     <Link href={`/recipe/${recipe.slug}`} className="bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all">
       <div className="h-48 bg-gray-800 relative overflow-hidden">
-        {recipe.imageUrl ? (
+        {recipe.slug ? (
           <Image 
-            src={recipe.imageUrl} 
+            src={getPhoto(recipe.slug)} 
             alt={recipe.title} 
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

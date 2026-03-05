@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getRecipe, getRecipeScore } from '@/lib/supabase';
+import { getRecipePhoto } from '@/lib/photos';
 import { getHealthierSwaps, getCategoryColor, getCategoryLabel, SwapSuggestion } from '@/lib/healthierSwaps';
 import RecipeSEO from '@/components/RecipeSEO';
 import { AdHorizontal, AdRectangle } from '@/components/AdUnit';
@@ -331,9 +332,9 @@ export default function RecipePage() {
       </nav>
 
       <div className="relative h-64 md:h-96 bg-gray-900 rounded-xl overflow-hidden mb-6">
-        {recipe.imageUrl ? (
+        {recipe.slug ? (
           <img 
-            src={recipe.imageUrl} 
+            src={getRecipePhoto(recipe.slug)} 
             alt={recipe.title}
             className="w-full h-full object-cover"
           />

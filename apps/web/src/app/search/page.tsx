@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { searchRecipes, getRecipePhoto } from '@/lib/supabase';
+import { searchRecipes } from '@/lib/supabase';
+import { getRecipePhoto as getPhoto } from '@/lib/photos';
 
 interface Recipe {
   id: string;
@@ -79,9 +80,9 @@ function SearchContent() {
               className="flex gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800 hover:border-primary-600"
             >
               <div className="w-32 h-24 bg-gray-800 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {recipe.imageUrl ? (
+                {recipe.slug ? (
                   <Image
-                    src={recipe.imageUrl}
+                    src={getPhoto(recipe.slug)}
                     alt={recipe.title}
                     fill
                     sizes="128px"

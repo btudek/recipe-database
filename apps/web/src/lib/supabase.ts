@@ -1,4 +1,5 @@
 import { getRecipePhoto } from './photos';
+import { SAMPLE_RECIPES } from './sampleData';
 
 const SUPABASE_URL = 'https://ycwbumsmlikiquplkdln.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inljd2J1bXNtbGlraXF1cGxrZGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTI0NTEsImV4cCI6MjA4Nzk4ODQ1MX0.OssOxG4gz6pxkWkycsjJqA5cEM_IyxgjqB6JHP4PbhA';
@@ -51,9 +52,15 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
   
   try {
     const response = await fetch(url, { ...options, headers });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.error(`API call failed for ${endpoint}:`, response.status, response.statusText);
+      return [];
+    }
     const text = await response.text();
-    if (!text) return [];
+    if (!text) {
+      console.error(`API call returned empty for ${endpoint}`);
+      return [];
+    }
     return JSON.parse(text);
   } catch (error) {
     console.error('API call failed:', error);
@@ -80,6 +87,25 @@ export async function getRecipes(filters?: { cuisine?: string; category?: string
   }
   
   const data = await apiCall(query);
+  
+  // If no data from API, use sample recipes as fallback
+  if (!data || data.length === 0) {
+    console.log('Using sample recipes as fallback');
+    return SAMPLE_RECIPES.map((r: any) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      description: r.description,
+      prepTime: r.prepTime || 0,
+      cookTime: r.cookTime || 0,
+      totalTime: r.totalTime || 0,
+      yield: r.yield || 4,
+      imageUrl: r.imageUrl,
+      cuisine: r.cuisine,
+      category: r.category,
+      diet: r.diet || null
+    }));
+  }
   
   const cuisines = await apiCall('/cuisine?select=*');
   const categories = await apiCall('/category?select=*');
@@ -112,7 +138,16 @@ export async function getRecipes(filters?: { cuisine?: string; category?: string
 
 export async function getRecipe(slug: string) {
   const recipes = await apiCall(`/recipe?select=*&slug=eq.${slug}&limit=1`);
-  if (!recipes || recipes.length === 0) return null;
+  
+  // If no data from API, try to find in sample recipes
+  if (!recipes || recipes.length === 0) {
+    const sampleRecipe = SAMPLE_RECIPES.find((r: any) => r.slug === slug);
+    if (sampleRecipe) {
+      return sampleRecipe;
+    }
+    return null;
+  }
+  
   const r = recipes[0];
   
   const ingredients = await apiCall(`/ingredient?recipe_id=eq.${r.id}&order=order_index`);
@@ -170,16 +205,53 @@ export async function getRecipe(slug: string) {
   };
 }
 
+// Sample fallback data
+const SAMPLE_CUISINES = [
+  { id: '1', name: 'American', slug: 'american' },
+  { id: '2', name: 'Italian', slug: 'italian' },
+  { id: '3', name: 'Mexican', slug: 'mexican' },
+  { id: '4', name: 'Chinese', slug: 'chinese' },
+  { id: '5', name: 'Japanese', slug: 'japanese' },
+  { id: '6', name: 'Indian', slug: 'indian' },
+  { id: '7', name: 'Thai', slug: 'thai' },
+  { id: '8', name: 'French', slug: 'french' },
+];
+
+const SAMPLE_CATEGORIES = [
+  { id: '1', name: 'Breakfast', slug: 'breakfast' },
+  { id: '2', name: 'Lunch', slug: 'lunch' },
+  { id: '3', name: 'Dinner', slug: 'dinner' },
+  { id: '4', name: 'Desserts', slug: 'desserts' },
+  { id: '5', name: 'Appetizers', slug: 'appetizers' },
+  { id: '6', name: 'Soups', slug: 'soups' },
+  { id: '7', name: 'Salads', slug: 'salads' },
+  { id: '8', name: 'Baking', slug: 'baking' },
+];
+
+const SAMPLE_DIETS = [
+  { id: '1', name: 'Vegetarian' },
+  { id: '2', name: 'Vegan' },
+  { id: '3', name: 'Gluten-Free' },
+  { id: '4', name: 'Keto' },
+  { id: '5', name: 'Paleo' },
+];
+
 export async function getCuisines() {
-  return apiCall('/cuisine?select=*&order=name');
+  const data = await apiCall('/cuisine?select=*&order=name');
+  if (!data || data.length === 0) return SAMPLE_CUISINES;
+  return data;
 }
 
 export async function getCategories() {
-  return apiCall('/category?select=*&order=name');
+  const data = await apiCall('/category?select=*&order=name');
+  if (!data || data.length === 0) return SAMPLE_CATEGORIES;
+  return data;
 }
 
 export async function getDiets() {
-  return apiCall('/diet?select=*&order=name');
+  const data = await apiCall('/diet?select=*&order=name');
+  if (!data || data.length === 0) return SAMPLE_DIETS;
+  return data;
 }
 
 // singular - for single recipe
@@ -200,7 +272,27 @@ export async function searchRecipes(query: string) {
   const encodedQuery = encodeURIComponent(query);
   const data = await apiCall(`/recipe?select=*&or=(title.ilike.*${encodedQuery}*,slug.ilike.*${encodedQuery}*)&order=title&limit=50`);
   
-  if (!data || data.length === 0) return [];
+  // If no data from API, search in sample recipes
+  if (!data || data.length === 0) {
+    const queryLower = query.toLowerCase();
+    const filtered = SAMPLE_RECIPES.filter((r: any) => 
+      r.title.toLowerCase().includes(queryLower) || 
+      r.description.toLowerCase().includes(queryLower)
+    );
+    return filtered.map((r: any) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      description: r.description || '',
+      prepTime: r.prepTime || 0,
+      cookTime: r.cookTime || 0,
+      totalTime: r.totalTime || 0,
+      yield: r.yield || 4,
+      imageUrl: r.imageUrl,
+      cuisine: r.cuisine,
+      category: r.category
+    }));
+  }
   
   return data.map((r: any) => ({
     id: r.id,

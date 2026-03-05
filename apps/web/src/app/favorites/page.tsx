@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRecipePhoto } from '@/lib/supabase';
+import { getRecipe } from '@/lib/supabase';
+import { getRecipePhoto as getPhoto } from '@/lib/photos';
 
 interface RecipePreview {
   id: string;
@@ -64,9 +65,9 @@ export default function FavoritesPage() {
             <div key={recipe.id} className="bg-gray-900 rounded-xl overflow-hidden">
               <Link href={`/recipe/${recipe.slug}`}>
                 <div className="relative h-48 bg-gray-800">
-                  {recipe.imageUrl ? (
+                  {recipe.slug ? (
                     <Image
-                      src={recipe.imageUrl}
+                      src={getPhoto(recipe.slug)}
                       alt={recipe.title}
                       fill
                       className="object-cover"
