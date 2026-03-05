@@ -111,7 +111,7 @@ export async function getRecipes(filters?: { cuisine?: string; category?: string
 }
 
 export async function getRecipe(slug: string) {
-  const recipes = await apiCall(`/recipe?select=*&slug=eq.${slug}&status=eq.published&limit=1`);
+  const recipes = await apiCall(`/recipe?select=*&slug=eq.${slug}&limit=1`);
   if (!recipes || recipes.length === 0) return null;
   const r = recipes[0];
   
@@ -198,7 +198,7 @@ export async function getRecipeScores(recipeIds?: string[]) {
 
 export async function searchRecipes(query: string) {
   const encodedQuery = encodeURIComponent(query);
-  const data = await apiCall(`/recipe?select=*&or=(title.ilike.*${encodedQuery}*,slug.ilike.*${encodedQuery}*)&status=eq.published&order=title&limit=50`);
+  const data = await apiCall(`/recipe?select=*&or=(title.ilike.*${encodedQuery}*,slug.ilike.*${encodedQuery}*)&order=title&limit=50`);
   
   if (!data || data.length === 0) return [];
   
