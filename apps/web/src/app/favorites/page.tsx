@@ -7,8 +7,6 @@ import { getRecipe } from '@/lib/supabase';
 import { getRecipePhoto as getPhoto } from '@/lib/photos';
 
 interface RecipePreview {
-
-interface RecipePreview {
   id: string;
   slug: string;
   title: string;
