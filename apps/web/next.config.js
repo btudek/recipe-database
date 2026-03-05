@@ -18,11 +18,6 @@ const nextConfig = {
   trailingSlash: true,
   // Enable compression
   compress: true,
-  // Set output directory for Vercel monorepo
-  output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: '.',
-  },
 };
 
 module.exports = nextConfig;
