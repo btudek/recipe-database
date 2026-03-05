@@ -332,12 +332,10 @@ export default function RecipePage() {
 
       <div className="relative h-64 md:h-96 bg-gray-900 rounded-xl overflow-hidden mb-6">
         {recipe.imageUrl ? (
-          <Image 
+          <img 
             src={recipe.imageUrl} 
-            alt={recipe.title} 
-            fill
-            className="object-cover"
-            priority
+            alt={recipe.title}
+            className="w-full h-full object-cover"
           />
         ) : (
           <div className="flex items-center justify-center h-full text-6xl">🍽️</div>
