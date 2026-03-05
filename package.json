@@ -2,7 +2,58 @@
   "name": "recipe-database",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "dev": "npx turbo dev",
+    "build": "cd apps/web && npm run build",
+    "lint": "npm run eslint",
+    "db:generate": "npx turbo db:generate",
+    "db:push": "npx turbo db:push",
+    "db:studio": "npx turbo db:studio",
+    "eslint": "eslint \"**/*.{js,cjs,ts,mjs,jsx,tsx}\"",
+    "lintfix": "npm run eslint -- --fix",
+    "postlint": "template-oss-check",
+    "template-oss-apply": "template-oss-apply --force",
+    "snap": "tap",
+    "test": "tap",
+    "posttest": "npm run lint"
+  },
   "dependencies": {
-    "next": "14.1.0"
+    "next": "14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.8.0",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "prisma": "^5.8.0",
+    "tailwindcss": "^3.4.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "GitHub Inc.",
+  "files": [
+    "bin/",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/btudek/recipe-database.git"
+  },
+  "templateOSS": {
+    "//@npmcli/template-oss": "This file is partially managed by @npmcli/template-oss. Edits may be overwritten.",
+    "version": "4.29.0"
+  },
+  "tap": {
+    "nyc-arg": [
+      "--exclude",
+      "tap-snapshots/**"
+    ]
   }
 }
