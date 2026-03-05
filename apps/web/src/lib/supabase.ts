@@ -69,7 +69,7 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
 }
 
 export async function getRecipes(filters?: { cuisine?: string; category?: string; diet?: string }) {
-  let query = '/recipe?select=*&limit=500';
+  let query = '/recipe?select=*&limit=1000';
   const params: string[] = [];
   
   if (filters?.cuisine) {
