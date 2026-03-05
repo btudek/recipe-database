@@ -90,7 +90,7 @@ function SearchContent() {
                   />
                 ) : (
                   <Image
-                    src={getRecipePhoto(recipe.slug)}
+                    src={getPhoto(recipe.slug)}
                     alt={recipe.title}
                     fill
                     sizes="128px"
