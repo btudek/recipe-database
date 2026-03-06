@@ -66,7 +66,7 @@ export default function HomePage() {
           id: r.id || r.slug,
           imageUrl: getRecipePhoto(r.slug),
           diet: null,
-          healthScore: null
+          healthScore: undefined
         })));
       } finally {
         setLoading(false);
