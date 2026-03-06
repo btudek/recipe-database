@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getRecipe, getRecipeScore } from '@/lib/supabase';
 import { getRecipePhoto } from '@/lib/photos';
+import { RECIPES } from '@/lib/recipes';
 import { getHealthierSwaps, getCategoryColor, getCategoryLabel, SwapSuggestion } from '@/lib/healthierSwaps';
 import RecipeSEO from '@/components/RecipeSEO';
 import { AdHorizontal, AdRectangle } from '@/components/AdUnit';
@@ -179,6 +180,20 @@ export default function RecipePage() {
   useEffect(() => {
     if (!slug) return;
     
+    // First try static data fallback
+    const staticRecipe = RECIPES.find(r => r.slug === slug);
+    if (staticRecipe) {
+      setRecipe(staticRecipe);
+      setServings(staticRecipe.yield || 4);
+      setIsFav(isFavorite(staticRecipe.id));
+      setUserRating(getRatings()[staticRecipe.id] || 0);
+      setComments(getComments()[staticRecipe.id] || []);
+      addToRecentlyViewed(staticRecipe.id, staticRecipe.title, staticRecipe.slug);
+      setLoading(false);
+      return;
+    }
+    
+    // Then try API
     getRecipe(slug)
       .then(async (data) => {
         if (!data) {
