@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getRecipes, getCuisines, getCategories, getDiets, getRecipeScores } from '@/lib/supabase';
 import { getRecipePhoto } from '@/lib/photos';
-import { SAMPLE_RECIPES } from '@/lib/sampleData';
+import { RECIPES as SAMPLE_RECIPES } from '@/lib/recipes';
 import { AdHorizontal, AdFluid } from '@/components/AdUnit';
 
 interface Recipe {
