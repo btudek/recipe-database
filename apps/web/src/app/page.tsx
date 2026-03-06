@@ -63,7 +63,10 @@ export default function HomePage() {
         // Fallback to sample data
         setRecipes(SAMPLE_RECIPES.slice(0, 6).map(r => ({
           ...r,
-          imageUrl: getRecipePhoto(r.slug)
+          id: r.id || r.slug,
+          imageUrl: getRecipePhoto(r.slug),
+          diet: null,
+          healthScore: null
         })));
       } finally {
         setLoading(false);
