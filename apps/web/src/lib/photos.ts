@@ -29,7 +29,7 @@ const FOOD_PHOTOS: Record<string, string> = {
   alfredo: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800',
   
   // Mexican
-  taco: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800',
+  taco: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
   burrito: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800',
   enchilada: 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?w=800',
   guacamole: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800',
