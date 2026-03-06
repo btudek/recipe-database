@@ -183,7 +183,24 @@ export default function RecipePage() {
     // First try static data fallback
     const staticRecipe = RECIPES.find(r => r.slug === slug);
     if (staticRecipe) {
-      setRecipe(staticRecipe);
+      // Cast to Recipe type
+      const recipe = {
+        ...staticRecipe,
+        imageUrl: staticRecipe.imageUrl || getRecipePhoto(slug),
+        ingredients: staticRecipe.ingredients?.map((i: any) => ({
+          name: i.name,
+          quantity: i.quantity || 0,
+          unit: i.unit || ''
+        })) || [],
+        steps: staticRecipe.steps?.map((s: any) => ({
+          stepNumber: s.stepNumber || 1,
+          instruction: s.instruction || '',
+          michelinNote: s.michelinNote || ''
+        })) || [],
+        diet: null,
+        healthScore: null
+      } as Recipe;
+      setRecipe(recipe);
       setServings(staticRecipe.yield || 4);
       setIsFav(isFavorite(staticRecipe.id));
       setUserRating(getRatings()[staticRecipe.id] || 0);
