@@ -7,24 +7,18 @@ const pool = new Pool({
   password: 'HailMaryFullOfGrace1$'
 });
 
-async function test() {
-  // Check Recipe table
-  const r = await pool.query('SELECT COUNT(*) as count FROM "Recipe"');
-  console.log('Recipe (capital) count:', r.rows[0].count);
+async function checkTables() {
+  const tables = await pool.query(`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public'
+    ORDER BY table_name
+  `);
   
-  // Check recipe table
-  const r2 = await pool.query('SELECT COUNT(*) as count FROM recipe');
-  console.log('recipe (lowercase) count:', r2.rows[0].count);
-  
-  // Get sample from Recipe
-  const r3 = await pool.query('SELECT * FROM "Recipe" LIMIT 2');
-  console.log('Recipe sample:', r3.rows);
-  
-  // Get sample from recipe
-  const r4 = await pool.query('SELECT id::text, title, slug FROM recipe LIMIT 2');
-  console.log('recipe sample:', r4.rows);
-  
-  await pool.end();
+  console.log('=== TABLES ===');
+  tables.rows.forEach(t => console.log(`  - ${t.table_name}`));
+
+  pool.end();
 }
 
-test().catch(console.error);
+checkTables().catch(console.error);
