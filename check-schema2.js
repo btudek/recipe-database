@@ -1,20 +1,22 @@
-const { Client } = require('pg');
-const client = new Client({ 
-  host: 'db.ycwbumsmlikiquplkdln.supabase.co', 
-  port: 5432, 
-  database: 'postgres', 
-  user: 'postgres', 
-  password: 'HailMaryFullOfGrace1$' 
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: 'db.ycwbumsmlikiquplkdln.supabase.co',
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres',
+  password: 'HailMaryFullOfGrace1$'
 });
 
-client.connect()
-  .then(() => client.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['recipe_step']))
-  .then(r => {
-    console.log('recipe_step columns:', r.rows.map(x => x.column_name).join(', '));
-    return client.query('SELECT column_name FROM information_schema.columns WHERE table_name = $1', ['cuisine']);
-  })
-  .then(r => {
-    console.log('cuisine columns:', r.rows.map(x => x.column_name).join(', '));
-    client.end();
-  })
-  .catch(e => { console.error(e); client.end(); });
+async function checkSchema() {
+  // Get RecipeStep columns
+  const cols = await pool.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'RecipeStep'
+  `);
+  console.log('RecipeStep columns:', JSON.stringify(cols.rows, null, 2));
+  
+  await pool.end();
+}
+
+checkSchema().catch(console.error);

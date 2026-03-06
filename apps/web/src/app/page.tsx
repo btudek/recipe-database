@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getRecipes, getCuisines, getCategories, getDiets, getRecipeScores } from '@/lib/supabase';
 import { getRecipePhoto } from '@/lib/photos';
+import { SAMPLE_RECIPES } from '@/lib/sampleData';
 import { AdHorizontal, AdFluid } from '@/components/AdUnit';
 
 interface Recipe {
@@ -59,6 +60,11 @@ export default function HomePage() {
         setDiets(dietsData || []);
       } catch (error) {
         console.error('Failed to fetch:', error);
+        // Fallback to sample data
+        setRecipes(SAMPLE_RECIPES.slice(0, 6).map(r => ({
+          ...r,
+          imageUrl: getRecipePhoto(r.slug)
+        })));
       } finally {
         setLoading(false);
       }
