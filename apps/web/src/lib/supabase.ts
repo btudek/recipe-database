@@ -263,9 +263,22 @@ export async function getRecipeScore(recipeId: string) {
 // plural - for multiple recipes  
 export async function getRecipeScores(recipeIds?: string[]) {
   if (recipeIds && recipeIds.length > 0) {
-    return apiCall(`/recipe_score?recipe_id=in.(${recipeIds.join(',')})`);
+    // Limit to first 50 to avoid URL length issues
+    const limitedIds = recipeIds.slice(0, 50);
+    const data = await apiCall(`/recipe_score?recipe_id=in.(${limitedIds.join(',')})`);
+    // Convert array to object for easier lookup
+    const scoreMap: Record<string, number> = {};
+    (data || []).forEach((item: any) => {
+      scoreMap[item.recipe_id] = item.score;
+    });
+    return scoreMap;
   }
-  return apiCall('/recipe_score?select=*');
+  const data = await apiCall('/recipe_score?select=*');
+  const scoreMap: Record<string, number> = {};
+  (data || []).forEach((item: any) => {
+    scoreMap[item.recipe_id] = item.score;
+  });
+  return scoreMap;
 }
 
 export async function searchRecipes(query: string) {

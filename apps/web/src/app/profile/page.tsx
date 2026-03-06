@@ -70,7 +70,7 @@ export default function ProfilePage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Welcome, {user.username}!</h1>
+            <h1 className="text-2xl font-bold text-white">Welcome, {user.name || user.username || 'Guest'}!</h1>
             <p className="text-gray-400">{user.email}</p>
           </div>
           <button

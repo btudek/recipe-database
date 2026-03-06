@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getRecipe } from '@/lib/supabase';
+import { getRecipes } from '@/lib/supabase';
 import { getRecipePhoto as getPhoto } from '@/lib/photos';
 
 interface RecipePreview {
@@ -26,10 +26,9 @@ export default function FavoritesPage() {
     setFavoriteIds(favs);
     
     // Load recipe previews for favorites
-    fetch('/api/recipes')
-      .then(res => res.json())
-      .then(data => {
-        const favoriteRecipes = (data.recipes || []).filter((r: RecipePreview) => favs.includes(r.id));
+    getRecipes()
+      .then((allRecipes) => {
+        const favoriteRecipes = (allRecipes || []).filter((r: any) => favs.includes(String(r.id)));
         setRecipes(favoriteRecipes);
         setLoading(false);
       })
@@ -73,12 +72,7 @@ export default function FavoritesPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <Image
-                      src={getPhoto(recipe.slug)}
-                      alt={recipe.title}
-                      fill
-                      className="object-cover"
-                    />
+                    <div className="flex items-center justify-center h-full text-5xl">🍽️</div>
                   )}
                 </div>
               </Link>

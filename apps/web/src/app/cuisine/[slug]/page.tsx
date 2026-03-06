@@ -52,13 +52,13 @@ export default function CuisinePage() {
         const cuisineRecipes = (allRecipes || []).filter((r: any) => r.cuisine?.slug === slug);
         
         // Get health scores
-        const recipeIds = cuisineRecipes.map((r: any) => r.id);
-        const scores = await getRecipeScores(recipeIds);
+        const recipeIds = cuisineRecipes.map((r: any) => String(r.id));
+        const scoreMap = await getRecipeScores(recipeIds);
         
         // Attach scores to recipes
         const recipesWithScores = cuisineRecipes.map((r: any) => ({
           ...r,
-          healthScore: scores[r.id] || null
+          healthScore: scoreMap[String(r.id)] || null
         }));
         
         setRecipes(recipesWithScores);
