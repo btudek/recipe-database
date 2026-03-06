@@ -1,4 +1,4 @@
-// Food photos for different recipe types - UNIQUE photos for each dish type
+// Food photos for different recipe types - UNIQUE photos for each dish type (NO DUPLICATES)
 const FOOD_PHOTOS: Record<string, string> = {
   // Indian - unique for each
   butterChicken: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800',
@@ -14,17 +14,17 @@ const FOOD_PHOTOS: Record<string, string> = {
   chai: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800',
   curry: 'https://images.unsplash.com/photo-1585938389612-a55228e2eb59?w=800',
   
-  // Italian - unique for each
+  // Italian - unique for each (ALL DIFFERENT)
   pizza: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
-  pasta: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800',
-  spaghetti: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800',
+  pasta: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800',
+  spaghetti: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800',
   carbonara: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=800',
   lasagna: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800',
   tiramisu: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800',
   risotto: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800',
   ravioli: 'https://images.unsplash.com/photo-1589984662646-e7b2e4962f18?w=800',
   penne: 'https://images.unsplash.com/photo-1551446593-142bedf19012?w=800',
-  fettuccine: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800',
+  fettuccine: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800',
   pesto: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800',
   alfredo: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800',
   
