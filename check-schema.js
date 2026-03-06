@@ -7,16 +7,14 @@ const pool = new Pool({
   password: 'HailMaryFullOfGrace1$'
 });
 
-async function check() {
-  const client = await pool.connect();
-  const tables = ['Recipe', 'Ingredient', 'RecipeStep'];
-  for (const t of tables) {
-    const r = await client.query(`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '${t}'`);
-    console.log(`\n=== ${t} ===`);
-    console.log(r.rows.map(x => x.column_name).join(', '));
-  }
-  client.release();
+async function checkSchema() {
+  const r = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe_step'");
+  console.log('recipe_step columns:', r.rows);
+  
+  const r2 = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'ingredient'");
+  console.log('ingredient columns:', r2.rows);
+  
   await pool.end();
 }
 
-check();
+checkSchema().catch(console.error);
