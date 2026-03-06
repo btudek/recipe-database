@@ -35,44 +35,15 @@ export default function HomePage() {
   const [selectedDiet, setSelectedDiet] = useState('');
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [recipesData, cuisinesData, categoriesData, dietsData] = await Promise.all([
-          getRecipes(),
-          getCuisines(),
-          getCategories(),
-          getDiets(),
-        ]);
-        
-        // Get health scores for recipes
-        const recipeIds = (recipesData || []).map((r: any) => r.id);
-        const scores = await getRecipeScores(recipeIds);
-        
-        // Attach scores to recipes
-        const recipesWithScores = (recipesData || []).map((r: any) => ({
-          ...r,
-          healthScore: scores[r.id] || null
-        }));
-        
-        setRecipes(recipesWithScores.slice(0, 6));
-        setCuisines(cuisinesData || []);
-        setCategories(categoriesData || []);
-        setDiets(dietsData || []);
-      } catch (error) {
-        console.error('Failed to fetch:', error);
-        // Fallback to sample data
-        setRecipes(SAMPLE_RECIPES.slice(0, 6).map(r => ({
-          ...r,
-          id: r.id || r.slug,
-          imageUrl: getRecipePhoto(r.slug),
-          diet: null,
-          healthScore: undefined
-        })));
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
+    // Use sample data for now - bypasses API issues
+    setRecipes(SAMPLE_RECIPES.slice(0, 6).map(r => ({
+      ...r,
+      id: r.id || r.slug,
+      imageUrl: getRecipePhoto(r.slug),
+      diet: null,
+      healthScore: undefined
+    })));
+    setLoading(false);
   }, []);
 
   // Fetch recipes when filters change
