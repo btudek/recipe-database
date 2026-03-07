@@ -93,7 +93,7 @@ export async function getDiets() {
 }
 
 export async function getRecipeScore(recipeId: string) {
-  return { score: Math.floor(Math.random() * 30) + 70 };
+  return { score: Math.floor(Math.random() * 30) + 70, general_score: Math.floor(Math.random() * 30) + 70 };
 }
 
 export async function getRecipeScores(recipeIds: string[]) {
