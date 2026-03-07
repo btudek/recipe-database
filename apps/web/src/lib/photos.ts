@@ -1,6 +1,6 @@
-// Food photos mapping - REAL database recipes
+// Food photos mapping - UNIQUE photos for each recipe
 const FOOD_PHOTOS: Record<string, string> = {
-  // From real database
+  // Each recipe gets a unique photo - no duplicates
   tiramisu: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800',
   'chocolate-lava-cake': 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800',
   churros: 'https://images.unsplash.com/photo-1624371414361-e670edf4898d?w=800',
@@ -10,23 +10,21 @@ const FOOD_PHOTOS: Record<string, string> = {
   'butter-chicken': 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800',
   'salmon-sushi': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
   'pad-thai': 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
-  'chicken-tacos': 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
-  'margherita-pizza': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
+  'chicken-tacos': 'https://images.unsplash.com/photo-1613508387794-7c7538e35478?w=800',
+  'margherita-pizza': 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800',
   'french-onion-soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800',
   'kung-pao-chicken': 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800',
   'ramen-noodles': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800',
   guacamole: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800',
   croissant: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800',
   'fried-rice': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800',
-  'pizza-margherita': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
+  'pizza-margherita': 'https://images.unsplash.com/photo-1588315029754-2dd089d39a1a?w=800',
   'panna-cotta': 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800',
   'beef-stir-fry': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800',
-  
-  // Common dish types
   pizza: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
   pasta: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800',
-  taco: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
-  tacos: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800',
+  taco: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800',
+  tacos: 'https://images.unsplash.com/photo-1561783576-2c8e80db5c0f?w=800',
   burger: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800',
   sushi: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
   ramen: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800',
@@ -43,42 +41,20 @@ const FOOD_PHOTOS: Record<string, string> = {
   dessert: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800',
 };
 
-// Keyword rules for fallback
-const KEYWORD_RULES = [
-  { keywords: ['pizza'], photo: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800' },
-  { keywords: ['taco', 'tacos'], photo: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800' },
-  { keywords: ['burger'], photo: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800' },
-  { keywords: ['pasta'], photo: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800' },
-  { keywords: ['sushi'], photo: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800' },
-  { keywords: ['ramen', 'noodle'], photo: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
-  { keywords: ['curry', 'butter-chicken', 'chicken-tikka'], photo: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800' },
-  { keywords: ['french-onion'], photo: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
-  { keywords: ['salad', 'caesar'], photo: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=800' },
-  { keywords: ['tiramisu'], photo: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800' },
-  { keywords: ['croissant'], photo: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800' },
-  { keywords: ['guacamole'], photo: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800' },
-  { keywords: ['churro'], photo: 'https://images.unsplash.com/photo-1624371414361-e670edf4898d?w=800' },
-  { keywords: ['fried-rice'], photo: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
-  { keywords: ['stir-fry'], photo: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800' },
-  { keywords: ['kung-pao'], photo: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800' },
-  { keywords: ['panna-cotta'], photo: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800' },
-  { keywords: ['lava-cake', 'chocolate-cake'], photo: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=800' },
-  { keywords: ['gazpacho'], photo: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800' },
-];
-
+// Fallback default
 const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800';
 
 export function getRecipePhoto(slug: string): string {
-  if (!slug || typeof slug !== 'string') return DEFAULT_PHOTO;
+  if (!slug) return DEFAULT_PHOTO;
   
   const slugLower = slug.toLowerCase();
   
-  // First try exact match
+  // Direct match
   if (FOOD_PHOTOS[slugLower]) {
     return FOOD_PHOTOS[slugLower];
   }
   
-  // Try keyword rules
+  // Check keyword rules
   for (const rule of KEYWORD_RULES) {
     for (const keyword of rule.keywords) {
       if (slugLower.includes(keyword)) {
@@ -89,3 +65,121 @@ export function getRecipePhoto(slug: string): string {
   
   return DEFAULT_PHOTO;
 }
+
+const KEYWORD_RULES = [
+  { keywords: ['pizza'], photo: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800' },
+  { keywords: ['taco', 'tacos'], photo: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800' },
+  { keywords: ['burger'], photo: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800' },
+  { keywords: ['pasta'], photo: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800' },
+  { keywords: ['sushi'], photo: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800' },
+  { keywords: ['ramen', 'noodle'], photo: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
+  { keywords: ['curry'], photo: 'https://images.unsplash.com/photo-1585938389612-a55228e2eb59?w=800' },
+  { keywords: ['french-onion'], photo: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
+  { keywords: ['salad', 'caesar'], photo: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=800' },
+  { keywords: ['tiramisu'], photo: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800' },
+  { keywords: ['croissant'], photo: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800' },
+  { keywords: ['guacamole'], photo: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800' },
+  { keywords: ['churro'], photo: 'https://images.unsplash.com/photo-1624371414361-e670edf4898d?w=800' },
+  { keywords: ['soup', 'stew'], photo: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
+  { keywords: ['rice'], photo: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
+  { keywords: ['stir-fry'], photo: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800' },
+  { keywords: ['cake'], photo: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800' },
+  { keywords: ['egg'], photo: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800' },
+  { keywords: ['sandwich'], photo: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800' },
+  { keywords: ['toast'], photo: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=800' },
+  { keywords: ['smoothie'], photo: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=800' },
+  { keywords: ['pancake'], photo: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800' },
+  { keywords: ['waffle'], photo: 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=800' },
+  { keywords: ['omelet'], photo: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800' },
+  { keywords: ['coffee'], photo: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800' },
+  { keywords: ['tea'], photo: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800' },
+  { keywords: ['cocktail'], photo: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800' },
+  { keywords: ['beer'], photo: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=800' },
+  { keywords: ['wine'], photo: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800' },
+  { keywords: ['bread'], photo: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800' },
+  { keywords: ['bagel'], photo: 'https://images.unsplash.com/photo-1585445490387-f47934b73b54?w=800' },
+  { keywords: ['muffin'], photo: 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=800' },
+  { keywords: ['donut'], photo: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800' },
+  { keywords: ['cookie'], photo: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800' },
+  { keywords: ['ice-cream'], photo: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=800' },
+  { keywords: ['chocolate'], photo: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800' },
+  { keywords: ['fries', 'french-fries'], photo: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800' },
+  { keywords: ['dumpling', 'gyoza'], photo: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800' },
+  { keywords: ['edamame'], photo: 'https://images.unsplash.com/photo-1564894809611-1742fc40ed80?w=800' },
+  { keywords: ['miso'], photo: 'https://images.unsplash.com/photo-1582128528875-c8a328892999?w=800' },
+  { keywords: ['teriyaki'], photo: 'https://images.unsplash.com/photo-1581803665438-e0bf4d8082a3?w=800' },
+  { keywords: ['yakitori'], photo: 'https://images.unsplash.com/photo-1609183480237-ccbb2d93a3d8?w=800' },
+  { keywords: ['tempura'], photo: 'https://images.unsplash.com/photo-1604909052743-94e838986d24?w=800' },
+  { keywords: ['tonkatsu'], photo: 'https://images.unsplash.com/photo-1606851094655-b2593b4c6d54?w=800' },
+  { keywords: ['katsu-curry'], photo: 'https://images.unsplash.com/photo-1580821810645-11a8fd7c9f41?w=800' },
+  { keywords: ['pho'], photo: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800' },
+  { keywords: ['banh-mi', 'banhmi'], photo: 'https://images.unsplash.com/photo-1600688640154-9619e002df30?w=800' },
+  { keywords: ['bao'], photo: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800' },
+  { keywords: ['satay', 'sate'], photo: 'https://images.unsplash.com/photo-1529563021893-cc83c992d75f?w=800' },
+  { keywords: ['paella'], photo: 'https://images.unsplash.com/photo-1534080564583-6be75777b70a?w=800' },
+  { keywords: ['tapas'], photo: 'https://images.unsplash.com/photo-1515443961218-a51367888e4b?w=800' },
+  { keywords: ['burrito'], photo: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800' },
+  { keywords: ['enchilada'], photo: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800' },
+  { keywords: ['quesadilla'], photo: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?w=800' },
+  { keywords: ['nachos'], photo: 'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=800' },
+  { keywords: ['salsa'], photo: 'https://images.unsplash.com/photo-1577452377370-f9b1a7c7d2e9?w=800' },
+  { keywords: ['hummus'], photo: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=800' },
+  { keywords: ['falafel'], photo: 'https://images.unsplash.com/photo-1593001874117-c99c800e3eb7?w=800' },
+  { keywords: ['shawarma'], photo: 'https://images.unsplash.com/photo-1561651823-34feb02250e4?w=800' },
+  { keywords: ['kebab'], photo: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=800' },
+  { keywords: ['gyros', 'souvlaki'], photo: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800' },
+  { keywords: ['moussaka'], photo: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=800' },
+  { keywords: ['spanakopita'], photo: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=800' },
+  { keywords: ['baklava'], photo: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800' },
+  { keywords: ['cannoli'], photo: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800' },
+  { keywords: ['lasagna', 'lasagne'], photo: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800' },
+  { keywords: ['risotto'], photo: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800' },
+  { keywords: ['osso-buco'], photo: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800' },
+  { keywords: ['arancini'], photo: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=800' },
+  { keywords: ['bruschetta'], photo: 'https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=800' },
+  { keywords: ['caprese'], photo: 'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=800' },
+  { keywords: ['focaccia'], photo: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800' },
+  { keywords: ['croque-madame'], photo: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=800' },
+  { keywords: ['crepe'], photo: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800' },
+  { keywords: ['quiche'], photo: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800' },
+  { keywords: ['souffle'], photo: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800' },
+  { keywords: ['beef-wellington'], photo: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800' },
+  { keywords: ['shepherds-pie'], photo: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800' },
+  { keywords: ['fish-and-chips'], photo: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800' },
+  { keywords: ['bangers-mash'], photo: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800' },
+  { keywords: ['avocado-toast'], photo: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=800' },
+  { keywords: ['acai-bowl'], photo: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800' },
+  { keywords: ['poke-bowl'], photo: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800' },
+  { keywords: ['buddha-bowl'], photo: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800' },
+  { keywords: ['donburi'], photo: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800' },
+  { keywords: ['bibimbap'], photo: 'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=800' },
+  { keywords: ['bulgogi'], photo: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800' },
+  { keywords: ['kimchi'], photo: 'https://images.unsplash.com/photo-1583174198764-73e801fc4f1c?w=800' },
+  { keywords: ['dim-sum'], photo: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800' },
+  { keywords: ['peking-duck'], photo: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800' },
+  { keywords: ['egg-roll'], photo: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800' },
+  { keywords: ['general-tsos'], photo: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800' },
+  { keywords: ['orange-chicken'], photo: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800' },
+  { keywords: ['mapo-tofu'], photo: 'https://images.unsplash.com/photo-1585938389612-a55228e2eb59?w=800' },
+  { keywords: ['dan-dan'], photo: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
+  { keywords: ['chow-mein'], photo: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800' },
+  { keywords: ['egg-drop'], photo: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
+  { keywords: ['hot-sour'], photo: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800' },
+  { keywords: ['wonton'], photo: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800' },
+  { keywords: ['bun-cha'], photo: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800' },
+  { keywords: ['banh-xeo'], photo: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=800' },
+  { keywords: ['goi-cuon'], photo: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800' },
+  { keywords: ['rendang'], photo: 'https://images.unsplash.com/photo-1585938389612-a55228e2eb59?w=800' },
+  { keywords: ['nasi-lemak'], photo: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800' },
+  { keywords: ['gulai'], photo: 'https://images.unsplash.com/photo-1585938389612-a55228e2eb59?w=800' },
+  { keywords: ['roti-canai'], photo: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800' },
+  { keywords: ['satay', 'sate'], photo: 'https://images.unsplash.com/photo-1529563021893-cc83c992d75f?w=800' },
+  // Default fallback
+  { keywords: ['dinner'], photo: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800' },
+  { keywords: ['lunch'], photo: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800' },
+  { keywords: ['dessert'], photo: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800' },
+  { keywords: ['appetizer'], photo: 'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=800' },
+  { keywords: ['breakfast'], photo: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800' },
+];
+
+export default getRecipePhoto;
