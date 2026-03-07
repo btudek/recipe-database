@@ -78,6 +78,17 @@ export async function getCategories() {
   return Array.from(categories).map((c: any) => JSON.parse(c));
 }
 
+export async function getDiets() {
+  return [
+    { id: '1', name: 'Vegetarian', slug: 'vegetarian' },
+    { id: '2', name: 'Vegan', slug: 'vegan' },
+    { id: '3', name: 'Gluten-Free', slug: 'gluten-free' },
+    { id: '4', name: 'Dairy-Free', slug: 'dairy-free' },
+    { id: '5', name: 'Keto', slug: 'keto' },
+    { id: '6', name: 'Low-Carb', slug: 'low-carb' }
+  ];
+}
+
 export async function getRecipeScore(recipeId: string) {
   return { score: Math.floor(Math.random() * 30) + 70 };
 }
