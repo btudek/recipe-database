@@ -1,15 +1,30 @@
 import { getRecipePhoto } from './photos';
-import { SAMPLE_RECIPES } from './sampleData';
 
 export { getRecipePhoto };
-
-// For legacy compatibility
 export const API_BASE = '';
 
-// Use local recipes - bypass broken API
+// Cache for recipes loaded from JSON
+let recipesCache: any[] | null = null;
+
+// Load recipes from JSON file at runtime
+async function loadRecipes(): Promise<any[]> {
+  if (recipesCache) return recipesCache;
+  
+  try {
+    const res = await fetch('/recipes.json');
+    if (!res.ok) throw new Error('Failed to load recipes');
+    recipesCache = await res.json();
+    console.log('Loaded', recipesCache.length, 'recipes from JSON');
+    return recipesCache;
+  } catch (e) {
+    console.error('Failed to load recipes:', e);
+    return [];
+  }
+}
+
 export async function getRecipes(filters?: { cuisine?: string; category?: string; diet?: string }) {
-  console.log('Using local recipes, total:', SAMPLE_RECIPES.length);
-  let filtered = [...SAMPLE_RECIPES];
+  const allRecipes = await loadRecipes();
+  let filtered = [...allRecipes];
   
   if (filters?.cuisine) {
     filtered = filtered.filter((r: any) => r.cuisine?.slug === filters.cuisine);
@@ -19,43 +34,31 @@ export async function getRecipes(filters?: { cuisine?: string; category?: string
   }
   
   return filtered.map((r: any) => ({
-    id: r.id,
-    slug: r.slug,
-    title: r.title,
-    description: r.description,
-    prepTime: r.prepTime || 0,
-    cookTime: r.cookTime || 0,
+    ...r,
     totalTime: r.totalTime || (r.prepTime || 0) + (r.cookTime || 0),
-    yield: r.yield || 4,
     imageUrl: r.imageUrl || getRecipePhoto(r.slug),
-    cuisine: r.cuisine,
-    category: r.category,
-    diet: r.diet,
-    ingredients: r.ingredients || [],
-    steps: r.steps || [],
     healthScore: r.healthScore || Math.floor(Math.random() * 50) + 50
   }));
 }
 
 export async function getRecipe(slug: string) {
-  const sampleRecipe = SAMPLE_RECIPES.find((r: any) => r.slug === slug);
-  if (sampleRecipe) {
+  const allRecipes = await loadRecipes();
+  const recipe = allRecipes.find((r: any) => r.slug === slug);
+  
+  if (recipe) {
     return {
-      ...sampleRecipe,
-      prepTime: sampleRecipe.prepTime || 0,
-      cookTime: sampleRecipe.cookTime || 0,
-      totalTime: sampleRecipe.totalTime || (sampleRecipe.prepTime || 0) + (sampleRecipe.cookTime || 0),
-      imageUrl: sampleRecipe.imageUrl || getRecipePhoto(slug),
-      ingredients: sampleRecipe.ingredients || [],
-      steps: sampleRecipe.steps || []
+      ...recipe,
+      totalTime: recipe.totalTime || (recipe.prepTime || 0) + (recipe.cookTime || 0),
+      imageUrl: recipe.imageUrl || getRecipePhoto(slug)
     };
   }
   return null;
 }
 
 export async function searchRecipes(query: string) {
+  const allRecipes = await loadRecipes();
   const q = query.toLowerCase();
-  const results = SAMPLE_RECIPES.filter((r: any) => 
+  const results = allRecipes.filter((r: any) => 
     r.title?.toLowerCase().includes(q) || 
     r.description?.toLowerCase().includes(q)
   );
@@ -66,16 +69,18 @@ export async function searchRecipes(query: string) {
 }
 
 export async function getCuisines() {
+  const allRecipes = await loadRecipes();
   const cuisines = new Set();
-  SAMPLE_RECIPES.forEach((r: any) => {
+  allRecipes.forEach((r: any) => {
     if (r.cuisine) cuisines.add(JSON.stringify(r.cuisine));
   });
   return Array.from(cuisines).map((c: any) => JSON.parse(c));
 }
 
 export async function getCategories() {
+  const allRecipes = await loadRecipes();
   const categories = new Set();
-  SAMPLE_RECIPES.forEach((r: any) => {
+  allRecipes.forEach((r: any) => {
     if (r.category) categories.add(JSON.stringify(r.category));
   });
   return Array.from(categories).map((c: any) => JSON.parse(c));
@@ -97,7 +102,6 @@ export async function getRecipeScore(recipeId: string) {
 }
 
 export async function getRecipeScores(recipeIds: string[]) {
-  // Return as Record for easier lookup
   const scoreMap: Record<string, number> = {};
   recipeIds.forEach(id => {
     scoreMap[String(id)] = Math.floor(Math.random() * 30) + 70;
