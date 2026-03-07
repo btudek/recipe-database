@@ -21,7 +21,7 @@ interface Ingredient {
 interface Step {
   stepNumber: number;
   instruction: string;
-  michelinNote?: string;
+  michelinNote?: string | null;
 }
 
 interface Recipe {
