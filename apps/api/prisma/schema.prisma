@@ -7,64 +7,129 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  username     String            @unique
-  passwordHash String
-  displayName  String?
-  avatarUrl    String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  comments     Comment[]
-  ratings      Rating[]
-  userRecipes  UserRecipe[]
-  savedRecipes UserSavedRecipe[]
+model Category {
+  id          String   @id
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  Recipe      Recipe[]
+}
+
+model Comment {
+  id         String   @id
+  userId     String
+  recipeId   String
+  content    String
+  isApproved Boolean  @default(true)
+  isDeleted  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+}
+
+model Cuisine {
+  id          String   @id
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  Recipe      Recipe[]
+}
+
+model Ingredient {
+  id         String  @id
+  recipeId   String
+  name       String
+  quantity   Float
+  unit       String
+  notes      String?
+  orderIndex Int
+  Recipe     Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+}
+
+model Rating {
+  id        String   @id
+  userId    String
+  recipeId  String
+  value     Int
+  createdAt DateTime @default(now())
+  Recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
 }
 
 model Recipe {
-  id              String            @id @default(cuid())
-  slug            String            @unique
-  title           String
-  description     String
-  seoDescription  String?
-  prepTime        Int
-  cookTime        Int
-  totalTime       Int?
-  yield           Int
-  cuisineId       String
-  categoryId      String
-  primaryKeyword  String?
-  metaTitle       String?
-  metaDescription String?
-  proTips         String?
-  storageInfo     String?
-  nutrition       Json?
-  imageUrl        String?
-  status          String            @default("draft")
-  publishedAt     DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  comments        Comment[]
-  ingredients     Ingredient[]
-  ratings         Rating[]
-  category        Category          @relation(fields: [categoryId], references: [id])
-  cuisine         Cuisine           @relation(fields: [cuisineId], references: [id])
-  relatedFrom     RecipeRelated[]   @relation("RecipeRelatedFrom")
-  relatedTo       RecipeRelated[]   @relation("RecipeRelatedTo")
-  steps           RecipeStep[]
-  versions        RecipeVersion[]
-  userRecipes     UserRecipe[]
-  savedBy         UserSavedRecipe[]
+  id                                               String            @id
+  slug                                             String            @unique
+  title                                            String
+  description                                      String
+  seoDescription                                   String?
+  prepTime                                         Int
+  cookTime                                         Int
+  totalTime                                        Int?
+  yield                                            Int
+  cuisineId                                        String
+  categoryId                                       String
+  primaryKeyword                                   String?
+  metaTitle                                        String?
+  metaDescription                                  String?
+  proTips                                          String?
+  storageInfo                                      String?
+  nutrition                                        Json?
+  imageUrl                                         String?
+  status                                           String            @default("draft")
+  publishedAt                                      DateTime?
+  createdAt                                        DateTime          @default(now())
+  updatedAt                                        DateTime
+  Comment                                          Comment[]
+  Ingredient                                       Ingredient[]
+  Rating                                           Rating[]
+  Category                                         Category          @relation(fields: [categoryId], references: [id])
+  Cuisine                                          Cuisine           @relation(fields: [cuisineId], references: [id])
+  RecipeRelated_RecipeRelated_fromRecipeIdToRecipe RecipeRelated[]   @relation("RecipeRelated_fromRecipeIdToRecipe")
+  RecipeRelated_RecipeRelated_toRecipeIdToRecipe   RecipeRelated[]   @relation("RecipeRelated_toRecipeIdToRecipe")
+  RecipeStep                                       RecipeStep[]
+  RecipeVersion                                    RecipeVersion[]
+  UserRecipe                                       UserRecipe[]
+  UserSavedRecipe                                  UserSavedRecipe[]
 
-  @@index([cuisineId])
   @@index([categoryId])
-  @@index([status, publishedAt])
+  @@index([cuisineId])
   @@index([slug])
+  @@index([status, publishedAt])
+}
+
+model RecipeRelated {
+  id                                        String @id
+  fromRecipeId                              String
+  toRecipeId                                String
+  Recipe_RecipeRelated_fromRecipeIdToRecipe Recipe @relation("RecipeRelated_fromRecipeIdToRecipe", fields: [fromRecipeId], references: [id], onDelete: Cascade)
+  Recipe_RecipeRelated_toRecipeIdToRecipe   Recipe @relation("RecipeRelated_toRecipeIdToRecipe", fields: [toRecipeId], references: [id], onDelete: Cascade)
+
+  @@unique([fromRecipeId, toRecipeId])
+}
+
+model RecipeStep {
+  id             String  @id
+  recipeId       String
+  stepNumber     Int
+  instruction    String
+  ingredientRefs String?
+  michelinNote   String?
+  Recipe         Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
 }
 
 model RecipeVersion {
-  id            String   @id @default(cuid())
+  id            String   @id
   recipeId      String
   versionNumber Int
   title         String
@@ -72,64 +137,26 @@ model RecipeVersion {
   ingredients   Json
   steps         Json
   createdAt     DateTime @default(now())
-  recipe        Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  Recipe        Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
-model Cuisine {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  imageUrl    String?
-  recipes     Recipe[]
-}
-
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  imageUrl    String?
-  recipes     Recipe[]
-}
-
-model Ingredient {
-  id         String  @id @default(cuid())
-  recipeId   String
-  name       String
-  quantity   Float
-  unit       String
-  notes      String?
-  orderIndex Int
-  recipe     Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-
-  @@index([recipeId])
-}
-
-model RecipeStep {
-  id             String  @id @default(cuid())
-  recipeId       String
-  stepNumber     Int
-  instruction    String
-  ingredientRefs String?
-  michelinNote   String?
-  recipe         Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-
-  @@index([recipeId])
-}
-
-model RecipeRelated {
-  id           String @id @default(cuid())
-  fromRecipeId String
-  toRecipeId   String
-  fromRecipe   Recipe @relation("RecipeRelatedFrom", fields: [fromRecipeId], references: [id], onDelete: Cascade)
-  toRecipe     Recipe @relation("RecipeRelatedTo", fields: [toRecipeId], references: [id], onDelete: Cascade)
-
-  @@unique([fromRecipeId, toRecipeId])
+model User {
+  id              String            @id
+  email           String            @unique
+  username        String            @unique
+  passwordHash    String
+  displayName     String?
+  avatarUrl       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  Comment         Comment[]
+  Rating          Rating[]
+  UserRecipe      UserRecipe[]
+  UserSavedRecipe UserSavedRecipe[]
 }
 
 model UserRecipe {
-  id             String   @id @default(cuid())
+  id             String   @id
   userId         String
   sourceRecipeId String?
   title          String
@@ -140,50 +167,23 @@ model UserRecipe {
   steps          Json
   notes          String?
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  sourceRecipe   Recipe?  @relation(fields: [sourceRecipeId], references: [id])
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime
+  Recipe         Recipe?  @relation(fields: [sourceRecipeId], references: [id])
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model UserSavedRecipe {
-  id       String   @id @default(cuid())
+  id       String   @id
   userId   String
   recipeId String
   savedAt  DateTime @default(now())
-  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
   @@index([userId])
-}
-
-model Comment {
-  id         String   @id @default(cuid())
-  userId     String
-  recipeId   String
-  content    String
-  isApproved Boolean  @default(true)
-  isDeleted  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([recipeId])
-}
-
-model Rating {
-  id        String   @id @default(cuid())
-  userId    String
-  recipeId  String
-  value     Int
-  createdAt DateTime @default(now())
-  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, recipeId])
 }
 
 model category {

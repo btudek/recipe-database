@@ -43,7 +43,7 @@ app.get('/api/recipes', async (request: any) => {
 
   return prisma.recipe.findMany({
     where,
-    include: { cuisine: true, category: true, diet: true },
+    include: { cuisine: true, category: true },
     take: limit,
     skip: offset,
     orderBy: { publishedAt: 'desc' },
@@ -58,7 +58,6 @@ app.get('/api/recipes/:slug', async (request: any) => {
     include: { 
       cuisine: true, 
       category: true,
-      diet: true,
       ingredients: { orderBy: { orderIndex: 'asc' } },
       steps: { orderBy: { stepNumber: 'asc' } },
     },
