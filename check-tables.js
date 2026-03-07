@@ -8,24 +8,22 @@ const pool = new Pool({
 });
 
 async function checkTables() {
-  const result = await pool.query(`
+  const tables = await pool.query(`
     SELECT table_name 
     FROM information_schema.tables 
     WHERE table_schema = 'public' 
-    ORDER BY table_name
+    AND table_name LIKE '%ingredient%'
   `);
-  console.log('All tables:', result.rows.map(x => x.table_name).join(', '));
+  console.log('Ingredient tables:', JSON.stringify(tables.rows, null, 2));
   
-  // Check ingredient table columns
-  const ingCols = await pool.query(`
-    SELECT column_name 
-    FROM information_schema.columns 
-    WHERE table_name = 'ingredient' AND table_schema = 'public' 
-    ORDER BY ordinal_position
+  // Get all tables
+  const allTables = await pool.query(`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public'
   `);
-  console.log('\nIngredient columns:', ingCols.rows.map(x => x.column_name).join(', '));
+  console.log('\nAll tables:', allTables.rows.map(t => t.table_name));
   
   pool.end();
 }
-
-checkTables().catch(console.error);
+checkTables();

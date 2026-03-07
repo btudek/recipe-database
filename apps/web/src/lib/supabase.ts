@@ -3,6 +3,9 @@ import { SAMPLE_RECIPES } from './sampleData';
 
 export { getRecipePhoto };
 
+// For legacy compatibility
+export const API_BASE = '';
+
 // Use local recipes - bypass broken API
 export async function getRecipes(filters?: { cuisine?: string; category?: string; diet?: string }) {
   console.log('Using local recipes, total:', SAMPLE_RECIPES.length);
