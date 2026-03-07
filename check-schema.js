@@ -1,5 +1,6 @@
-const { Pool } = require('pg');
-const pool = new Pool({
+const { Client } = require('pg');
+
+const client = new Client({
   host: 'db.ycwbumsmlikiquplkdln.supabase.co',
   port: 5432,
   database: 'postgres',
@@ -7,14 +8,20 @@ const pool = new Pool({
   password: 'HailMaryFullOfGrace1$'
 });
 
-async function checkSchema() {
-  const r = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe_step'");
-  console.log('recipe_step columns:', r.rows);
-  
-  const r2 = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'ingredient'");
-  console.log('ingredient columns:', r2.rows);
-  
-  await pool.end();
+async function main() {
+  try {
+    await client.connect();
+    const cols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe'");
+    console.log('Recipe columns:', cols.rows.map(x => x.column_name).join(', '));
+    
+    const stepCols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe_step'");
+    console.log('Recipe step columns:', stepCols.rows.map(x => x.column_name).join(', '));
+    
+    const ingCols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'ingredient'");
+    console.log('Ingredient columns:', ingCols.rows.map(x => x.column_name).join(', '));
+  } finally {
+    await client.end();
+  }
 }
 
-checkSchema().catch(console.error);
+main().catch(console.error);
