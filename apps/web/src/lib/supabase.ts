@@ -94,9 +94,10 @@ export async function getRecipeScore(recipeId: string) {
 }
 
 export async function getRecipeScores(recipeIds: string[]) {
+  // Return as Record for easier lookup
   const scoreMap: Record<string, number> = {};
   recipeIds.forEach(id => {
     scoreMap[String(id)] = Math.floor(Math.random() * 30) + 70;
   });
-  return recipeIds.map(id => ({ recipe_id: id, score: scoreMap[String(id)] }));
+  return scoreMap;
 }
