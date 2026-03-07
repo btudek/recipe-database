@@ -42,6 +42,7 @@ export function applyCustomImages() {
 
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`;
+  console.log('API Call:', url);
   const headers = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,

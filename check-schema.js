@@ -8,20 +8,25 @@ const client = new Client({
   password: 'HailMaryFullOfGrace1$'
 });
 
-async function main() {
-  try {
-    await client.connect();
-    const cols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe'");
-    console.log('Recipe columns:', cols.rows.map(x => x.column_name).join(', '));
-    
-    const stepCols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'recipe_step'");
-    console.log('Recipe step columns:', stepCols.rows.map(x => x.column_name).join(', '));
-    
-    const ingCols = await client.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'ingredient'");
-    console.log('Ingredient columns:', ingCols.rows.map(x => x.column_name).join(', '));
-  } finally {
-    await client.end();
-  }
+async function checkSchema() {
+  await client.connect();
+  
+  const steps = await client.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'recipe_step'
+  `);
+  
+  const ings = await client.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'ingredient'
+  `);
+  
+  console.log("recipe_step columns:", steps.rows);
+  console.log("\ningredient columns:", ings.rows);
+  
+  await client.end();
 }
 
-main().catch(console.error);
+checkSchema().catch(console.error);
