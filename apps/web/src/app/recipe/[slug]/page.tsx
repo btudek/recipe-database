@@ -31,7 +31,7 @@ interface Recipe {
   description: string;
   prepTime: number;
   cookTime: number;
-  totalTime: number;
+  totalTime?: number;
   yield: number;
   cuisine: { name: string; slug: string };
   category: { name: string; slug: string };
